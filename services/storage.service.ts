@@ -1,42 +1,36 @@
 'use server';
 
-import { createClient } from '@/lib/supabase-server';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { v4 as uuidv4 } from 'uuid';
 
 const getSupabase = () => {
   const cookieStore = cookies();
-  return createClient(cookieStore);
+  return createServerComponentClient({ cookies: () => cookieStore });
 };
 
-export const upload_file = async (formData: FormData) => {
+export async function upload_file(formData: FormData) {
   const supabase = getSupabase();
   const file = formData.get('file') as File;
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${uuidv4()}.${fileExt}`;
+  const fileName = file.name;
 
   const { data, error } = await supabase.storage
     .from('pdfs')
     .upload(fileName, file, {
       cacheControl: '3600',
-      upsert: false
+      upsert: false,
     });
 
   if (error) throw error;
   return data;
-};
+}
 
-export const download_file = async (path: string) => {
+export async function get_file_url(path: string): Promise<string> {
   const supabase = getSupabase();
-  const { data, error } = await supabase.storage
-    .from('pdfs')
-    .download(path);
+  const { data } = supabase.storage.from('pdfs').getPublicUrl(path);
+  return data.publicUrl;
+}
 
-  if (error) throw error;
-  return data;
-};
-
-export const delete_file = async (path: string) => {
+export async function delete_file(path: string) {
   const supabase = getSupabase();
   const { data, error } = await supabase.storage
     .from('pdfs')
@@ -44,9 +38,9 @@ export const delete_file = async (path: string) => {
 
   if (error) throw error;
   return data;
-};
+}
 
-export const list_files = async () => {
+export async function list_files() {
   const supabase = getSupabase();
   const { data, error } = await supabase.storage
     .from('pdfs')
@@ -54,4 +48,4 @@ export const list_files = async () => {
 
   if (error) throw error;
   return data;
-};
+}
