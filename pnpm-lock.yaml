@@ -23,6 +23,7 @@ specifiers:
   '@types/pdf-parse': ^1.1.4
   '@types/react': ^18.3.7
   '@types/react-dom': ^18.3.0
+  '@types/reveal.js': ^5.0.3
   '@types/uuid': ^10.0.0
   '@typescript-eslint/eslint-plugin': ^8.6.0
   '@typescript-eslint/parser': ^8.6.0
@@ -43,6 +44,8 @@ specifiers:
   react-dom: ^18
   react-hook-form: ^7.53.0
   react-pdf: ^9.1.0
+  react-reveal: ^1.2.2
+  reveal.js: ^5.1.0
   shadcn-ui: ^0.9.1
   tailwind-merge: ^2.5.2
   tailwindcss: ^3.4.1
@@ -82,6 +85,8 @@ dependencies:
   react-dom: 18.3.1_react@18.3.1
   react-hook-form: 7.53.0_react@18.3.1
   react-pdf: 9.1.0_alp2qibgw6zzmr6zldxutc6wc4
+  react-reveal: 1.2.2_react@18.3.1
+  reveal.js: 5.1.0
   tailwind-merge: 2.5.2
   tailwindcss-animate: 1.0.7_tailwindcss@3.4.12
   uuid: 10.0.0
@@ -93,6 +98,7 @@ devDependencies:
   '@types/pdf-parse': 1.1.4
   '@types/react': 18.3.7
   '@types/react-dom': 18.3.0
+  '@types/reveal.js': 5.0.3
   '@types/uuid': 10.0.0
   '@typescript-eslint/eslint-plugin': 8.6.0_nzurzogbm7s2edwn4ff6ll4yrm
   '@typescript-eslint/parser': 8.6.0_hjvaeeg43g7el7m5pcdc7xyzxm
@@ -1620,6 +1626,10 @@ packages:
     dependencies:
       '@types/prop-types': 15.7.13
       csstype: 3.1.3
+
+  /@types/reveal.js/5.0.3:
+    resolution: {integrity: sha512-gwnK8TR38IOBIORWFrV5/z9lRX4iLke2FBqNgRhXxehaWJFkrzVY2TVzfdX/SX94eugt+OI5l++zDBBSfdzruQ==}
+    dev: true
 
   /@types/semver/7.5.8:
     resolution: {integrity: sha512-I8EUhyrgfLrcTkzV3TSsGyl1tSuPrEDzr0yd5m90UgNxQkyDXULk3b6MlQqTCpZpNtWe1K0hzclnZkTcLBe2UQ==}
@@ -4577,7 +4587,6 @@ packages:
       loose-envify: 1.4.0
       object-assign: 4.1.1
       react-is: 16.13.1
-    dev: true
 
   /proxy-from-env/1.1.0:
     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
@@ -4619,7 +4628,6 @@ packages:
 
   /react-is/16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
-    dev: true
 
   /react-pdf/9.1.0_alp2qibgw6zzmr6zldxutc6wc4:
     resolution: {integrity: sha512-KhPDQE3QshkLdS3b48S5Bldv0N5flob6qwvsiADWdZOS5TMDaIrkRtEs+Dyl6ubRf2jTf9jWmFb6RjWu46lSSg==}
@@ -4680,6 +4688,15 @@ packages:
       tslib: 2.7.0
       use-callback-ref: 1.3.2_enhbzhellpsr42dbfdegmkkvby
       use-sidecar: 1.1.2_enhbzhellpsr42dbfdegmkkvby
+    dev: false
+
+  /react-reveal/1.2.2_react@18.3.1:
+    resolution: {integrity: sha512-JCv3fAoU6Z+Lcd8U48bwzm4pMZ79qsedSXYwpwt6lJNtj/v5nKJYZZbw3yhaQPPgYePo3Y0NOCoYOq/jcsisuw==}
+    peerDependencies:
+      react: ^15.3.0 || ^16.0.0
+    dependencies:
+      prop-types: 15.8.1
+      react: 18.3.1
     dev: false
 
   /react-style-singleton/2.2.1_enhbzhellpsr42dbfdegmkkvby:
@@ -4796,6 +4813,11 @@ packages:
   /reusify/1.0.4:
     resolution: {integrity: sha512-U9nH88a3fc/ekCF1l0/UP1IosiuIjyTh7hBvXVMHYgVcfGvt897Xguj2UOLDeI5BG2m7/uwyaLVT6fbtCwTyzw==}
     engines: {iojs: '>=1.0.0', node: '>=0.10.0'}
+
+  /reveal.js/5.1.0:
+    resolution: {integrity: sha512-KDt7m0+xwKV6nAZt4CNPVFBf42sTKRQapg0bGGKB5PKO5XvChnMfwlZkybydHiQJ7p5+6LbHKRGrhXODdoNIaA==}
+    engines: {node: '>=18.0.0'}
+    dev: false
 
   /rimraf/3.0.2:
     resolution: {integrity: sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==}
