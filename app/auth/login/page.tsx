@@ -35,7 +35,7 @@ export default function Login() {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: 'test@frnt.io',
-        password: '!a5GD6yPDMg8FfCE'
+        password: '@gExNSDk?Q7PH$!r'
       });
       
       if (error) throw error;
