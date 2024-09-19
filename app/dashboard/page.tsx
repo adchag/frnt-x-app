@@ -4,16 +4,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase-client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { createAssistant, listAssistants, deleteAssistant } from '@/services/openai.service';
+import { listAssistants, deleteAssistant } from '@/services/openai.service';
+import Link from 'next/link';
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [assistants, setAssistants] = useState<any[]>([]);
-  const [newAssistant, setNewAssistant] = useState({ name: '', description: '', instructions: '' });
   const router = useRouter();
   const supabase = createClient();
   const { toast } = useToast();
@@ -40,26 +38,6 @@ export default function Dashboard() {
       toast({
         title: 'Error',
         description: 'Failed to fetch assistants',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleCreateAssistant = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await createAssistant(newAssistant.name, newAssistant.description, newAssistant.instructions);
-      setNewAssistant({ name: '', description: '', instructions: '' });
-      fetchAssistants();
-      toast({
-        title: 'Success',
-        description: 'Assistant created successfully',
-      });
-    } catch (error) {
-      console.error('Error creating assistant:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to create assistant',
         variant: 'destructive',
       });
     }
@@ -96,56 +74,40 @@ export default function Dashboard() {
       <p className="mb-4">You are logged in as: {user.email}</p>
       <Button onClick={handleSignOut} className="mb-8">Sign Out</Button>
 
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Create New Assistant</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleCreateAssistant} className="space-y-4">
-            <Input
-              placeholder="Assistant Name"
-              value={newAssistant.name}
-              onChange={(e) => setNewAssistant({ ...newAssistant, name: e.target.value })}
-              required
-            />
-            <Input
-              placeholder="Description"
-              value={newAssistant.description}
-              onChange={(e) => setNewAssistant({ ...newAssistant, description: e.target.value })}
-            />
-            <Textarea
-              placeholder="Instructions"
-              value={newAssistant.instructions}
-              onChange={(e) => setNewAssistant({ ...newAssistant, instructions: e.target.value })}
-              required
-            />
-            <Button type="submit">Create Assistant</Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>All Assistants</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {assistants.map((assistant) => (
-            <div key={assistant.id} className="mb-4 p-4 border rounded">
-              <h3 className="text-xl font-semibold">{assistant.name}</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card className="flex flex-col justify-center items-center p-6">
+          <Link href="/assistant/create">
+            <Button variant="outline" size="lg">
+              Create New Assistant
+            </Button>
+          </Link>
+        </Card>
+        {assistants.map((assistant) => (
+          <Card key={assistant.id}>
+            <CardHeader>
+              <CardTitle>{assistant.name}</CardTitle>
+            </CardHeader>
+            <CardContent>
               <p>{assistant.description}</p>
               <p className="text-sm text-gray-500">Model: {assistant.model}</p>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Link href={`/assistant/chat/${assistant.assistant_id}`}>
+                <Button variant="outline">Chat</Button>
+              </Link>
+              <Link href={`/assistant/edit/${assistant.assistant_id}`}>
+                <Button variant="outline">Edit</Button>
+              </Link>
               <Button
                 onClick={() => handleDeleteAssistant(assistant.assistant_id)}
                 variant="destructive"
-                size="sm"
-                className="mt-2"
               >
                 Delete
               </Button>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
