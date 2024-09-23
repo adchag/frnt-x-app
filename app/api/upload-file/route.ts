@@ -22,12 +22,12 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
 
     const response = await openai.files.create({
-      file: buffer,
+      file: buffer as any,
       purpose: 'assistants',
     });
 
     return NextResponse.json({ id: response.id });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error uploading file:', error);
     return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 });
   }

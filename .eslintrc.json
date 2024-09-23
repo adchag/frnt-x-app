@@ -3,6 +3,20 @@
   "rules": {
     "no-any": "off",
     // https://typescript-eslint.io/rules/no-explicit-any/
-    "no-explicit-any": "off"
+    "no-explicit-any": "off",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      { 
+        "varsIgnorePattern": "^_",
+        "argsIgnorePattern": "^_",
+        "ignoreRestSiblings": true,
+        "destructuredArrayIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_",
+        "caughtErrors": "all"
+      }
+    ],
+    "@typescript-eslint/no-empty-interface": "off",
+    "@typescript-eslint/no-empty-object-type": "off"
   }
 }
