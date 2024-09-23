@@ -7,7 +7,8 @@ import { createClient } from '@/lib/supabase-client';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User } from '@supabase/supabase-js';
-import { Building, Users, FileText } from 'lucide-react';
+import { Building, Users, FileText, Moon, Sun } from 'lucide-react';
+import { useTheme } from "next-themes"
 
 export default function DashboardLayout({
   children,
@@ -18,6 +19,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
+  const { setTheme } = useTheme();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -46,12 +48,20 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <div className="w-64 bg-white shadow-md">
+    <div className="flex h-screen bg-background">
+      <div className="w-64 bg-card shadow-md">
         <div className="p-4">
           <h2 className="text-2xl font-bold mb-4">Dashboard</h2>
-          <p className="mb-4 text-sm">Logged in as: {user.email}</p>
+          <p className="mb-4 text-sm">Logged in as: {user?.email}</p>
           <Button onClick={handleSignOut} className="w-full mb-4">Sign Out</Button>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="icon" onClick={() => setTheme("light")}>
+              <Sun className="h-[1.2rem] w-[1.2rem]" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => setTheme("dark")}>
+              <Moon className="h-[1.2rem] w-[1.2rem]" />
+            </Button>
+          </div>
         </div>
         <Tabs value={getActiveTab()} className="w-full" orientation="vertical">
           <TabsList className="flex flex-col items-stretch h-full">
