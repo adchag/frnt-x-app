@@ -1,6 +1,8 @@
 {
   "extends": ["next/core-web-vitals", "next/typescript"],
   "rules": {
-    "no-any": "off"
+    "no-any": "off",
+    // https://typescript-eslint.io/rules/no-explicit-any/
+    "no-explicit-any": "off"
   }
 }

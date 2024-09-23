@@ -3,6 +3,7 @@
 import OpenAI from 'openai';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -13,17 +14,43 @@ const getSupabase = () => {
   return createServerComponentClient({ cookies: () => cookieStore });
 };
 
-export async function createAssistant(name: string, description: string, instructions: string, model: string = 'gpt-4') {
+// Add this function to handle file uploads
+export async function uploadFileToAssistant(file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('purpose', 'assistants');
+
+  const response = await fetch('/api/upload-file', {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.id;
+}
+
+// Modify the createAssistant function to accept a file
+export async function createAssistant(name: string, description: string, instructions: string, model: string = 'gpt-4', file?: File) {
   const supabase = getSupabase();
   const { data: { user } } = await supabase.auth.getUser();
 
-
   try {
+    let fileId;
+    if (file) {
+      fileId = await uploadFileToAssistant(file);
+    }
+
     const assistant = await openai.beta.assistants.create({
       name,
       description,
       instructions,
       model,
+      file_ids: fileId ? [fileId] : undefined,
     });
 
     const { data, error } = await supabase
@@ -35,6 +62,7 @@ export async function createAssistant(name: string, description: string, instruc
         description: assistant.description,
         model: assistant.model,
         instructions: assistant.instructions,
+        file_ids: fileId ? [fileId] : null,
       })
       .select()
       .single();
@@ -103,16 +131,18 @@ export async function getAssistant(assistantId: string) {
   }
 }
 
-export async function updateAssistant(assistantId: string, updatedData: any) {
+export async function updateAssistant(assistantId: string, updatedData: {
+  name: string;
+  description: string;
+  instructions: string;
+  file_ids: string[];
+}) {
   const supabase = getSupabase();
 
   try {
-    // Remove 'id', 'user_id', and 'assistant_id' from updatedData
-    const { id, user_id, assistant_id, created_at, updated_at, ...assistantUpdateData } = updatedData;
-
     const assistant = await openai.beta.assistants.update(
       assistantId,
-      assistantUpdateData
+      updatedData
     );
 
     const { error } = await supabase
@@ -121,6 +151,7 @@ export async function updateAssistant(assistantId: string, updatedData: any) {
         name: assistant.name,
         description: assistant.description,
         instructions: assistant.instructions,
+        file_ids: assistant.file_ids,
       })
       .eq('assistant_id', assistantId);
 
@@ -161,3 +192,5 @@ export async function sendMessage(assistantId: string, message: string) {
     throw error;
   }
 }
+
+
