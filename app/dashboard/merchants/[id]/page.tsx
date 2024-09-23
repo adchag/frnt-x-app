@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useMerchant } from '@/app/hooks/use-merchant'
 import { Button } from '@/components/ui/button'
 import { deleteMerchantMandate } from '@/app/services/merchant.service'
+import PageLoader from '@/components/page-loader'
 
 const MerchantMandatePage = () => {
   const { id } = useParams()
@@ -18,7 +19,7 @@ const MerchantMandatePage = () => {
     }
   }
 
-  if (isLoading) return <div>Loading...</div>
+  if (isLoading) return <PageLoader />
   if (error) return <div>Error: {error.message}</div>
   if (!merchant) return <div>Merchant not found</div>
 

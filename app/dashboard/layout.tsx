@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-client';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ export default function DashboardLayout({
 }) {
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClient();
 
   useEffect(() => {
@@ -37,6 +38,13 @@ export default function DashboardLayout({
 
   if (!user) return null;
 
+  const getActiveTab = () => {
+    if (pathname === '/dashboard') return 'assistants';
+    if (pathname.startsWith('/dashboard/merchants')) return 'merchants';
+    if (pathname === '/dashboard/convert-pdf') return 'convert-pdf';
+    return 'assistants'; // default to assistants if no match
+  };
+
   return (
     <div className="flex h-screen bg-gray-100">
       <div className="w-64 bg-white shadow-md">
@@ -45,7 +53,7 @@ export default function DashboardLayout({
           <p className="mb-4 text-sm">Logged in as: {user.email}</p>
           <Button onClick={handleSignOut} className="w-full mb-4">Sign Out</Button>
         </div>
-        <Tabs defaultValue="assistants" className="w-full" orientation="vertical">
+        <Tabs value={getActiveTab()} className="w-full" orientation="vertical">
           <TabsList className="flex flex-col items-stretch h-full">
             <TabsTrigger value="assistants" asChild className="justify-start">
               <Link href="/dashboard" className="flex items-center">

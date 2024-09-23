@@ -5,6 +5,7 @@ import { useMerchant } from '@/app/hooks/use-merchant'
 import { Button } from '@/components/ui/button'
 import { MyTable } from '@/components/my-table'
 import { ColumnDef } from '@tanstack/react-table'
+import PageLoader from '@/components/page-loader'
 
 interface MerchantMandate {
   id: string
@@ -34,7 +35,7 @@ const columns: ColumnDef<MerchantMandate>[] = [
 const MerchantsPage = () => {
   const { merchants, isLoading, error } = useMerchant()
 
-  if (isLoading) return <div>Loading...</div>
+  if (isLoading) return <PageLoader />
   if (error) return <div>Error: {error.message}</div>
 
   return (
