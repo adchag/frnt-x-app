@@ -1,34 +1,32 @@
-import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { NextRequest, NextResponse } from "next/server"
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+export const runtime = "edge" // Add this line
 
-export async function POST(req: NextRequest) {
-  if (!req.body) {
-    return NextResponse.json({ error: 'No file provided' }, { status: 400 });
-  }
-
+export async function POST(request: NextRequest) {
   try {
-    const formData = await req.formData();
-    const file = formData.get('file') as File;
+    const formData = await request.formData()
+    const file = formData.get("file")
 
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    if (!file || !(file instanceof File)) {
+      return NextResponse.json({ error: "No file uploaded" }, { status: 400 })
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const supabase = createRouteHandlerClient({ cookies })
 
-    const response = await openai.files.create({
-      file: buffer as any,
-      purpose: 'assistants',
-    });
+    const { data, error } = await supabase.storage
+      .from("documents")
+      .upload(`file-${Date.now()}.pdf`, file)
 
-    return NextResponse.json({ id: response.id });
-  } catch (error: any) {
-    console.error('Error uploading file:', error);
-    return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 });
+    if (error) {
+      console.error("Supabase storage error:", error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ data })
+  } catch (error) {
+    console.error("Unexpected error:", error)
+    return NextResponse.json({ error: "An unexpected error occurred" }, { status: 500 })
   }
 }
