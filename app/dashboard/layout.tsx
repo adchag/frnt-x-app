@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase-client';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User } from '@supabase/supabase-js';
+import { Building, Users, FileText } from 'lucide-react';
 
 export default function DashboardLayout({
   children,
@@ -47,10 +48,22 @@ export default function DashboardLayout({
         <Tabs defaultValue="assistants" className="w-full" orientation="vertical">
           <TabsList className="flex flex-col items-stretch h-full">
             <TabsTrigger value="assistants" asChild className="justify-start">
-              <Link href="/dashboard">Assistants</Link>
+              <Link href="/dashboard" className="flex items-center">
+                <Building className="mr-2" />
+                Assistants
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="merchants" asChild className="justify-start">
+              <Link href="/dashboard/merchants" className="flex items-center">
+                <Users className="mr-2" />
+                Merchants
+              </Link>
             </TabsTrigger>
             <TabsTrigger value="convert-pdf" asChild className="justify-start">
-              <Link href="/dashboard/convert-pdf">Convert PDF</Link>
+              <Link href="/dashboard/convert-pdf" className="flex items-center">
+                <FileText className="mr-2" />
+                Convert PDF
+              </Link>
             </TabsTrigger>
           </TabsList>
         </Tabs>
