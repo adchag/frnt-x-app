@@ -18,7 +18,7 @@ const CreateMerchantMandatePage = () => {
 
     await createMerchantMandate({
       company_name,
-      logo_url,
+      logo: {url:logo_url},
       description,
     })
 

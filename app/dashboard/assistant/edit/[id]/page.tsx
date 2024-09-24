@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
+
 import { getAssistant, updateAssistant, uploadFileToAssistant } from '@/services/openai.service';
 
 export default function EditAssistant({ params }: { params: { id: string } }) {
@@ -14,8 +15,7 @@ export default function EditAssistant({ params }: { params: { id: string } }) {
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
-
+  
   useEffect(() => {
     const fetchAssistant = async () => {
       try {
@@ -23,11 +23,7 @@ export default function EditAssistant({ params }: { params: { id: string } }) {
         setAssistant(data);
       } catch (error) {
         console.error('Error fetching assistant:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch assistant details',
-          variant: 'destructive',
-        });
+        toast.error('Failed to fetch assistant details');
       }
     };
     fetchAssistant();
@@ -43,13 +39,9 @@ export default function EditAssistant({ params }: { params: { id: string } }) {
         try {
           const fileId = await uploadFileToAssistant(file);
           newFileIds.push(fileId);
-        } catch (error) {
+        } catch (error:any) {
           console.error(`Error uploading file ${file.name}:`, error);
-          toast({
-            title: 'Error',
-            description: `Failed to upload ${file.name}: ${error.message}`,
-            variant: 'destructive',
-          });
+          toast.error(`Failed to upload ${file.name}: ${error.message}`);
         }
       }
       
@@ -61,18 +53,11 @@ export default function EditAssistant({ params }: { params: { id: string } }) {
       };
 
       await updateAssistant(assistant.assistant_id, updateData);
-      toast({
-        title: 'Success',
-        description: 'Assistant updated successfully',
-      });
+      toast.success('Assistant updated successfully');
       router.push('/dashboard');
     } catch (error) {
       console.error('Error updating assistant:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update assistant: ' + (error as Error).message,
-        variant: 'destructive',
-      });
+      toast.error('Failed to update assistant: ' + (error as Error).message);
     } finally {
       setIsLoading(false);
     }
@@ -84,11 +69,7 @@ export default function EditAssistant({ params }: { params: { id: string } }) {
       const validFiles = selectedFiles.filter(file => file.size <= 20 * 1024 * 1024);
       
       if (validFiles.length !== selectedFiles.length) {
-        toast({
-          title: 'Warning',
-          description: 'Some files were not added because they exceed the 20MB size limit.',
-          variant: 'warning',
-        });
+        toast.warning('Some files were not added because they exceed the 20MB size limit.');
       }
       
       setFiles(validFiles);

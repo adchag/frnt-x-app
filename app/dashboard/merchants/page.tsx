@@ -63,7 +63,7 @@ const MerchantsPage = () => {
           <Button>Create New Mandate</Button>
         </Link>
       </div>
-      <MyTable columns={columns} data={merchants} />
+      <MyTable columns={columns} data={merchants as any} />
     </div>
   )
 }

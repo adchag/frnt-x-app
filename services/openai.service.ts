@@ -50,7 +50,6 @@ export async function createAssistant(name: string, description: string, instruc
       description,
       instructions,
       model,
-      file_ids: fileId ? [fileId] : undefined,
     });
 
     const { data, error } = await supabase
@@ -150,8 +149,7 @@ export async function updateAssistant(assistantId: string, updatedData: {
       .update({
         name: assistant.name,
         description: assistant.description,
-        instructions: assistant.instructions,
-        file_ids: assistant.file_ids,
+        instructions: assistant.instructions
       })
       .eq('assistant_id', assistantId);
 
@@ -185,8 +183,10 @@ export async function sendMessage(assistantId: string, message: string) {
 
     const messages = await openai.beta.threads.messages.list(thread.id);
     const assistantMessage = messages.data.find(m => m.role === 'assistant');
+    
+    const { text } = assistantMessage?.content[0] as any
 
-    return assistantMessage?.content[0].text.value || 'No response from assistant.';
+    return text.value || 'No response from assistant.';
   } catch (error) {
     console.error('Error sending message:', error);
     throw error;

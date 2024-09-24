@@ -29,9 +29,9 @@ const MerchantMandatePage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <h2 className="text-xl font-semibold mb-2">Logo</h2>
-          {merchant.logo_url ? (
+          {merchant.logo ? (
             <Image
-              src={merchant.logo_url}
+              src={merchant.logo.url}
               alt={`${merchant.company_name} logo`}
               width={200}
               height={200}
