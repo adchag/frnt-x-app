@@ -13,6 +13,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from "sonner"
 import { debounce } from 'lodash';
+import { Label } from '@/components/ui/label';
 
 interface FormData {
   company_name: string;
@@ -95,9 +96,7 @@ const EditMerchantMandatePage = () => {
       <h1 className="text-3xl font-bold mb-6">Edit Merchant Mandate</h1>
       <div className="space-y-4">
         <div>
-          <label htmlFor="company_name" className="block text-sm font-medium text-gray-700">
-            Company Name
-          </label>
+          <Label htmlFor="company_name">Company Name</Label>
           <Controller
             name="company_name"
             control={control}
@@ -105,6 +104,7 @@ const EditMerchantMandatePage = () => {
             render={({ field, fieldState: { error } }) => (
               <>
                 <Input 
+                  id="company_name"
                   {...field} 
                   onBlur={() => debouncedUpdateField('company_name', field.value)}
                 />
@@ -114,14 +114,13 @@ const EditMerchantMandatePage = () => {
           />
         </div>
         <div>
-          <label htmlFor="logo" className="block text-sm font-medium text-gray-700">
-            Logo
-          </label>
+          <Label htmlFor="logo">Logo</Label>
           <Controller
             name="logo"
             control={control}
             render={({ field: { onChange, value } }) => (
               <FileUploader
+                id="logo"
                 bucketName="merchant-logos"
                 folderPath={`${id}`}
                 value={value}
@@ -137,14 +136,13 @@ const EditMerchantMandatePage = () => {
           />
         </div>
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-            Description
-          </label>
+          <Label htmlFor="description">Description</Label>
           <Controller
             name="description"
             control={control}
             render={({ field }) => (
               <Textarea 
+                id="description"
                 {...field} 
                 rows={4} 
                 onBlur={() => debouncedUpdateField('description', field.value)}
