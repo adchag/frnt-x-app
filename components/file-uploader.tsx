@@ -179,7 +179,9 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
     disabled: !multiple && files.length >= 1,
   });
 
-  const handleDelete = async (file: FileData) => {
+  const handleDelete = async (file: FileData, e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent form submission
+    e.stopPropagation(); // Stop event propagation
     setFiles((prevFiles) =>
       prevFiles.map((f) =>
         f.id === file.id ? { ...f, isDeleting: true } : f
@@ -188,13 +190,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
     const filePath = file.path || `${folderPath}/${file.id}`;
 
-    // Delete the file from Supabase storage
-    const {error: storageError,...rest} = await supabase.storage
+    const { error: storageError } = await supabase.storage
       .from(bucketName)
       .remove([filePath]);
-      
-    console.debug('storageError', storageError);
-    console.debug('rest', rest);
+
     if (storageError) {
       toast.error(`Failed to delete ${file.name} from storage: ${storageError.message}`);
       setFiles((prevFiles) =>
@@ -206,15 +205,13 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
     }
 
     // Remove the file from the local state
-    setFiles((prevFiles) => prevFiles.filter((f) => f.id !== file.id));
+    const updatedFiles = files.filter((f) => f.id !== file.id);
+    setFiles(updatedFiles);
     toast.success(`${file.name} deleted successfully.`);
 
     // Update parent component
     if (onChange) {
-      const updatedFiles = multiple
-        ? files.filter((f) => f.id !== file.id)
-        : null;
-      onChange(updatedFiles);
+      onChange(multiple ? updatedFiles : null);
     }
   };
 
@@ -272,7 +269,11 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => window.open(file.url, '_blank')}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.open(file.url, '_blank');
+                }}
               >
                 <Download className="w-4 h-4" />
               </Button>
@@ -280,7 +281,11 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setDeleteFile(file)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDeleteFile(file);
+              }}
               disabled={file.isDeleting}
             >
               <Trash className="w-4 h-4 text-red-500" />
@@ -330,9 +335,11 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
             </Button>
             <Button
               variant="destructive"
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 if (deleteFile) {
-                  handleDelete(deleteFile);
+                  handleDelete(deleteFile, e);
                   setDeleteFile(null);
                 }
               }}
