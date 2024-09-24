@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
-import { useMerchant } from '@/app/hooks/use-merchant'
+import { useMerchant } from '@/hooks/use-merchant'
 import { Button } from '@/components/ui/button'
 import { deleteMerchantMandate } from '@/services/merchant.service'
 import PageLoader from '@/components/page-loader'
