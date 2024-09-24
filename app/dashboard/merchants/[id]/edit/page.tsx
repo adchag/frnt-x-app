@@ -48,14 +48,7 @@ const EditMerchantMandatePage = () => {
       const initialData = {
         company_name: merchant.company_name,
         description: merchant.description || '',
-        logo: merchant.logo ? {
-          id: merchant.logo.id || `${Date.now()}-${merchant.logo.name}`,
-          name: merchant.logo.name,
-          type: merchant.logo.type || 'image/png',
-          size: merchant.logo.size,
-          path: merchant.logo.path || `${id}/${merchant.logo.id || merchant.logo.name}`,
-          url: merchant.logo.url || '',
-        } : null,
+        logo: merchant.logo,
         files: merchant.files || [],
       };
       setOriginalData(initialData);
@@ -130,8 +123,8 @@ const EditMerchantMandatePage = () => {
                 <FormLabel>Logo</FormLabel>
                 <FormControl>
                   <FileUploader
-                    bucketName="merchant-logos"
-                    folderPath={`${id}`}
+                    bucketName="merchants"
+                    folderPath={`${id}/logos`}
                     value={field.value}
                     onChange={(files) => {
                       const file = Array.isArray(files) ? files[0] : files;
@@ -171,8 +164,8 @@ const EditMerchantMandatePage = () => {
                 <FormLabel>Additional Files</FormLabel>
                 <FormControl>
                   <FileUploader
-                    bucketName="merchant-files"
-                    folderPath={`${id}`}
+                    bucketName="merchants"
+                    folderPath={`${id}/files`}
                     value={field.value}
                     onChange={(files) => {
                       field.onChange(files);
