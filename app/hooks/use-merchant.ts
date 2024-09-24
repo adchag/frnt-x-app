@@ -1,13 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getMerchantMandate, getMerchantMandates } from '@/app/services/merchant.service'
-
-interface MerchantMandate {
-  id: string
-  company_name: string
-  logo_url?: string
-  description?: string
-}
-
+import { getMerchantMandate, getMerchantMandates,MerchantMandate } from '@/services/merchant.service'
 export const useMerchant = (id?: string) => {
   const [merchant, setMerchant] = useState<MerchantMandate | null>(null)
   const [merchants, setMerchants] = useState<MerchantMandate[]>([])
@@ -20,10 +12,10 @@ export const useMerchant = (id?: string) => {
       try {
         if (id) {
           const data = await getMerchantMandate(id)
-          setMerchant(data)
+          setMerchant(data as MerchantMandate)
         } else {
           const data = await getMerchantMandates()
-          setMerchants(data)
+          setMerchants(data as MerchantMandate[])
         }
       } catch (err) {
         setError(err instanceof Error ? err : new Error('An error occurred'))

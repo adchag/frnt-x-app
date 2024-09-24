@@ -1,19 +1,31 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useMerchant } from '@/app/hooks/use-merchant'
 import { Button } from '@/components/ui/button'
 import { MyTable } from '@/components/my-table'
 import { ColumnDef } from '@tanstack/react-table'
 import PageLoader from '@/components/page-loader'
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface MerchantMandate {
   id: string
   company_name: string
   description: string
+  logo_url: string
 }
 
 const columns: ColumnDef<MerchantMandate>[] = [
+  {
+    id: 'avatar',
+    cell: ({ row }) => (
+      <Avatar>
+        <AvatarImage src={row.original.logo_url} alt={row.original.company_name} />
+        <AvatarFallback>{row.original.company_name.charAt(0)}</AvatarFallback>
+      </Avatar>
+    ),
+  },
   {
     accessorKey: 'company_name',
     header: 'Company Name',
@@ -25,9 +37,14 @@ const columns: ColumnDef<MerchantMandate>[] = [
   {
     id: 'actions',
     cell: ({ row }) => (
-      <Link href={`/dashboard/merchants/${row.original.id}`}>
-        <Button variant="outline" size="sm">View</Button>
-      </Link>
+      <div className="space-x-2">
+        <Link href={`/dashboard/merchants/${row.original.id}`}>
+          <Button variant="outline" size="sm">View</Button>
+        </Link>
+        <Link href={`/dashboard/merchants/${row.original.id}/edit`}>
+          <Button variant="outline" size="sm">Edit</Button>
+        </Link>
+      </div>
     ),
   },
 ]

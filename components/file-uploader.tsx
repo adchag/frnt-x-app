@@ -4,9 +4,12 @@
 
 import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { createClient } from '@/lib/supabase-client';
+import { createClient } from '../lib/supabase-client';
 import {
   Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   CardDescription,
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -16,7 +19,7 @@ import {
   X,
   Download,
   Trash,
-  File as FileIcon,
+  File,
   Image as ImageIcon,
   Music,
   Video,
@@ -30,6 +33,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import Image from 'next/image';
 
 const supabase = createClient();
 
@@ -39,16 +43,21 @@ interface FileData {
   url: string;
   type: string;
   size?: number;
-  path: string;
+  path?: string;
+  isUploading?: boolean;
+  isDeleting?: boolean;
+  progress?: number;
+  [key: string]: any;
 }
 
 interface FileUploaderProps {
   bucketName: string;
   folderPath: string;
-  value?: FileData | FileData[] | null;
+  value?: FileData | FileData[];
   onChange?: (files: FileData | FileData[] | null) => void;
   multiple?: boolean;
   maxFiles?: number;
+  acceptedFileTypes?: string[];
 }
 
 export const FileUploader: React.FC<FileUploaderProps> = ({
@@ -58,6 +67,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   onChange,
   multiple = true,
   maxFiles,
+  acceptedFileTypes = ['image/*'],
 }) => {
   const [files, setFiles] = useState<FileData[]>([]);
   const [deleteFile, setDeleteFile] = useState<FileData | null>(null);
@@ -66,11 +76,24 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   useEffect(() => {
     if (value) {
       const initialFiles = Array.isArray(value) ? value : [value];
-      setFiles(initialFiles);
+      // Ensure default properties are set and generate URL if missing
+      const initializedFiles = initialFiles.map((file) => ({
+        ...file,
+        isUploading: false,
+        isDeleting: false,
+        progress: 100,
+        url: file.url || generateFileUrl(bucketName, file.path || `${folderPath}/${file.id}`),
+      }));
+      setFiles(initializedFiles);
     } else {
       setFiles([]);
     }
-  }, [value]);
+  }, [value, bucketName, folderPath]);
+
+  const generateFileUrl = (bucket: string, path: string) => {
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+    return data.publicUrl;
+  };
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -86,51 +109,64 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
         filesToAdd = acceptedFiles.slice(0, availableSlots);
       }
 
-      for (const file of filesToAdd) {
-        const fileId = `${Date.now()}-${file.name}`;
-        const filePath = `${folderPath}/${fileId}`;
+      const newFiles = filesToAdd.map((file) => ({
+        id: `${Date.now()}-${file.name}`,
+        name: file.name,
+        url: '',
+        type: file.type, // This should correctly set the MIME type
+        size: file.size,
+        file,
+        isUploading: true,
+        progress: 0,
+      }));
 
-        // Upload the file to Supabase Storage
+      if (!multiple) {
+        // Replace existing files
+        setFiles(newFiles);
+      } else {
+        setFiles((prevFiles) => [...prevFiles, ...newFiles]);
+      }
+
+      for (const fileData of newFiles) {
+        const filePath = `${folderPath}/${fileData.id}`;
+
         const { error } = await supabase.storage
           .from(bucketName)
-          .upload(filePath, file, {
+          .upload(filePath, fileData.file, {
             upsert: true,
           });
 
         if (error) {
-          toast.error(`Failed to upload ${file.name}: ${error.message}`);
+          toast.error(`Failed to upload ${fileData.name}: ${error.message}`);
+          setFiles((prevFiles) => prevFiles.filter((f) => f.id !== fileData.id));
           continue;
         }
 
-        // Get the public URL of the uploaded file
         const { data: urlData } = supabase.storage
           .from(bucketName)
           .getPublicUrl(filePath);
 
-        const newFile: FileData = {
-          id: fileId,
-          name: file.name,
-          url: urlData.publicUrl,
-          type: file.type,
-          size: file.size,
-          path: filePath,
-        };
+        setFiles((prevFiles) =>
+          prevFiles.map((f) =>
+            f.id === fileData.id
+              ? {
+                  ...f,
+                  url: urlData.publicUrl,
+                  path: filePath,
+                  isUploading: false,
+                  progress: 100,
+                }
+              : f
+          )
+        );
 
-        if (!multiple) {
-          // Replace existing files
-          setFiles([newFile]);
-          if (onChange) {
-            onChange(newFile);
-          }
-        } else {
-          const updatedFiles = [...files, newFile];
-          setFiles(updatedFiles);
-          if (onChange) {
-            onChange(updatedFiles);
-          }
-        }
+        toast.success(`${fileData.name} uploaded successfully.`);
+      }
 
-        toast.success(`${file.name} uploaded successfully.`);
+      // Update parent component
+      if (onChange) {
+        const updatedFiles = multiple ? [...files, ...newFiles] : newFiles[0];
+        onChange(updatedFiles);
       }
     },
     [bucketName, folderPath, files, onChange, multiple, maxFiles]
@@ -139,34 +175,47 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     multiple,
+    accept: acceptedFileTypes.reduce((acc, type) => ({ ...acc, [type]: [] }), {}),
     disabled: !multiple && files.length >= 1,
   });
 
   const handleDelete = async (file: FileData) => {
-    // Delete the file from Supabase Storage
-    const { error } = await supabase.storage
-      .from(bucketName)
-      .remove([file.path]);
+    setFiles((prevFiles) =>
+      prevFiles.map((f) =>
+        f.id === file.id ? { ...f, isDeleting: true } : f
+      )
+    );
 
-    if (error) {
-      toast.error(`Failed to delete ${file.name}: ${error.message}`);
+    const filePath = file.path || `${folderPath}/${file.id}`;
+
+    // Delete the file from Supabase storage
+    const {error: storageError,...rest} = await supabase.storage
+      .from(bucketName)
+      .remove([filePath]);
+      
+    console.debug('storageError', storageError);
+    console.debug('rest', rest);
+    if (storageError) {
+      toast.error(`Failed to delete ${file.name} from storage: ${storageError.message}`);
+      setFiles((prevFiles) =>
+        prevFiles.map((f) =>
+          f.id === file.id ? { ...f, isDeleting: false } : f
+        )
+      );
       return;
     }
 
-    // Update the state
-    const updatedFiles = files.filter((f) => f.id !== file.id);
-    setFiles(updatedFiles);
+    // Remove the file from the local state
+    setFiles((prevFiles) => prevFiles.filter((f) => f.id !== file.id));
+    toast.success(`${file.name} deleted successfully.`);
 
     // Update parent component
     if (onChange) {
-      if (multiple) {
-        onChange(updatedFiles);
-      } else {
-        onChange(null);
-      }
+      const updatedFiles = multiple
+        ? files.filter((f) => f.id !== file.id)
+        : null;
+      onChange(updatedFiles);
     }
-
-    toast.success(`${file.name} deleted successfully.`);
   };
 
   const renderFileIcon = (fileType: string) => {
@@ -179,21 +228,27 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
     } else if (fileType === 'application/pdf') {
       return <FileText className="w-8 h-8 text-gray-500" />;
     } else {
-      return <FileIcon className="w-8 h-8 text-gray-500" />;
+      return <File className="w-8 h-8 text-gray-500" />;
     }
   };
+  
 
   const renderFilePreview = (file: FileData) => {
+
     return (
       <Card key={file.id} className="flex items-center p-4">
-        {/* Left: Icon or Image */}
+        {/* Left: Image or Icon */}
         <div className="flex-shrink-0">
           {file.type.startsWith('image/') && file.url ? (
-            <img
-              src={file.url}
-              alt={file.name}
-              className="w-12 h-12 object-cover rounded"
-            />
+            <div className="relative w-12 h-12">
+              <Image
+                src={file.url}
+                alt={file.name}
+                width={48}
+                height={48}
+                className="rounded object-cover"
+              />
+            </div>
           ) : (
             renderFileIcon(file.type)
           )}
@@ -206,21 +261,27 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               {(file.size / 1024).toFixed(2)} KB
             </p>
           )}
+          {file.isUploading && (
+            <Progress value={file.progress} className="mt-2" />
+          )}
         </div>
         {/* Right: Actions */}
         <div className="flex-shrink-0 ml-4">
           <div className="flex space-x-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => window.open(file.url, '_blank')}
-            >
-              <Download className="w-4 h-4" />
-            </Button>
+            {file.url && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => window.open(file.url, '_blank')}
+              >
+                <Download className="w-4 h-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setDeleteFile(file)}
+              disabled={file.isDeleting}
             >
               <Trash className="w-4 h-4 text-red-500" />
             </Button>

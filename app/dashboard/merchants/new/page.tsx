@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { createMerchantMandate } from '@/app/services/merchant.service'
+import { createMerchantMandate } from '@/services/merchant.service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
