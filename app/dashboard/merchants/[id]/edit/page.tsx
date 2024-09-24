@@ -20,6 +20,8 @@ interface FormData {
   description: string;
 }
 
+type Database = any;
+
 const EditMerchantMandatePage = () => {
   const { id } = useParams();
   const router = useRouter();
