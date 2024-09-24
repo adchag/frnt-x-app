@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
-import { useMerchant } from '@/hooks/use-merchant';
+import { useMerchant } from '@/app/hooks/use-merchant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,6 +27,7 @@ interface FormData {
   company_name: string;
   logo: any;
   description: string;
+  files: any[];
 }
 
 type Database = any;
@@ -55,6 +56,7 @@ const EditMerchantMandatePage = () => {
           path: merchant.logo.path || `${id}/${merchant.logo.id || merchant.logo.name}`,
           url: merchant.logo.url || '',
         } : null,
+        files: merchant.files || [],
       };
       setOriginalData(initialData);
       Object.entries(initialData).forEach(([key, value]) => {
@@ -157,6 +159,32 @@ const EditMerchantMandatePage = () => {
                     onBlur={() => debouncedUpdateField('description', field.value)}
                   />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="files"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Additional Files</FormLabel>
+                <FormControl>
+                  <FileUploader
+                    bucketName="merchant-files"
+                    folderPath={`${id}`}
+                    value={field.value}
+                    onChange={(files) => {
+                      field.onChange(files);
+                      debouncedUpdateField('files', files);
+                    }}
+                    multiple={true}
+                    acceptedFileTypes={['image/*', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Upload additional files related to the merchant (images, PDFs, Word documents)
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

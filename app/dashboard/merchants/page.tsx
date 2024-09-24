@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useMerchant } from '@/hooks/use-merchant'
+import { useMerchant } from '@/app/hooks/use-merchant'
 import { Button } from '@/components/ui/button'
 import { MyTable } from '@/components/my-table'
 import { ColumnDef } from '@tanstack/react-table'
