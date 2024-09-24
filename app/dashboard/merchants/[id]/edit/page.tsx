@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useMerchant } from '@/hooks/use-merchant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,15 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from "sonner"
 import { debounce } from 'lodash';
-import { Label } from '@/components/ui/label';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 interface FormData {
   company_name: string;
@@ -29,7 +37,7 @@ const EditMerchantMandatePage = () => {
   const supabase = createClientComponentClient<Database>();
   const { merchant, isLoading, error } = useMerchant(id as string);
 
-  const { control, setValue, watch } = useForm<FormData>();
+  const form = useForm<FormData>();
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [originalData, setOriginalData] = useState<FormData | null>(null);
@@ -50,10 +58,10 @@ const EditMerchantMandatePage = () => {
       };
       setOriginalData(initialData);
       Object.entries(initialData).forEach(([key, value]) => {
-        setValue(key as keyof FormData, value);
+        form.setValue(key as keyof FormData, value);
       });
     }
-  }, [merchant, id, setValue]);
+  }, [merchant, id]);
 
   const updateField = useCallback(async (field: string, value: any) => {
     if (JSON.stringify(originalData?.[field as keyof FormData]) === JSON.stringify(value)) {
@@ -94,63 +102,67 @@ const EditMerchantMandatePage = () => {
         </Button>
       </div>
       <h1 className="text-3xl font-bold mb-6">Edit Merchant Mandate</h1>
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="company_name">Company Name</Label>
-          <Controller
+      <Form {...form}>
+        <form className="space-y-4">
+          <FormField
+            control={form.control}
             name="company_name"
-            control={control}
-            rules={{ required: 'Company name is required' }}
-            render={({ field, fieldState: { error } }) => (
-              <>
-                <Input 
-                  id="company_name"
-                  {...field} 
-                  onBlur={() => debouncedUpdateField('company_name', field.value)}
-                />
-                {error && <p className="text-red-500 text-sm mt-1">{error.message}</p>}
-              </>
-            )}
-          />
-        </div>
-        <div>
-          <Label htmlFor="logo">Logo</Label>
-          <Controller
-            name="logo"
-            control={control}
-            render={({ field: { onChange, value } }) => (
-              <FileUploader
-                id="logo"
-                bucketName="merchant-logos"
-                folderPath={`${id}`}
-                value={value}
-                onChange={(files) => {
-                  const file = Array.isArray(files) ? files[0] : files;
-                  onChange(file);
-                  debouncedUpdateField('logo', file);
-                }}
-                multiple={false}
-                acceptedFileTypes={['image/*']}
-              />
-            )}
-          />
-        </div>
-        <div>
-          <Label htmlFor="description">Description</Label>
-          <Controller
-            name="description"
-            control={control}
             render={({ field }) => (
-              <Textarea 
-                id="description"
-                {...field} 
-                rows={4} 
-                onBlur={() => debouncedUpdateField('description', field.value)}
-              />
+              <FormItem>
+                <FormLabel>Company Name</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    onBlur={() => debouncedUpdateField('company_name', field.value)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
           />
-        </div>
-      </div>
+          <FormField
+            control={form.control}
+            name="logo"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Logo</FormLabel>
+                <FormControl>
+                  <FileUploader
+                    bucketName="merchant-logos"
+                    folderPath={`${id}`}
+                    value={field.value}
+                    onChange={(files) => {
+                      const file = Array.isArray(files) ? files[0] : files;
+                      field.onChange(file);
+                      debouncedUpdateField('logo', file);
+                    }}
+                    multiple={false}
+                    acceptedFileTypes={['image/*']}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    rows={4}
+                    onBlur={() => debouncedUpdateField('description', field.value)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </form>
+      </Form>
       {isUpdating && <p className="text-blue-500 mt-4">Updating...</p>}
     </div>
   );
