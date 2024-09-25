@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { createClient } from '../lib/supabase-client';
 import {
@@ -58,6 +58,7 @@ interface FileUploaderProps {
   multiple?: boolean;
   maxFiles?: number;
   acceptedFileTypes?: string[];
+  onDelete?: (fileId: string) => void;
 }
 
 export const FileUploader: React.FC<FileUploaderProps> = ({
@@ -71,6 +72,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 }) => {
   const [files, setFiles] = useState<FileData[]>([]);
   const [deleteFile, setDeleteFile] = useState<FileData | null>(null);
+  const filesRef = useRef<FileData[]>([]);
 
   // Initialize files from value
   useEffect(() => {
@@ -90,6 +92,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
     }
   }, [value, bucketName, folderPath]);
 
+  useEffect(() => {
+    filesRef.current = files;
+  }, [files]);
+
   const generateFileUrl = (bucket: string, path: string) => {
     const { data } = supabase.storage.from(bucket).getPublicUrl(path);
     return data.publicUrl;
@@ -97,7 +103,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
-      if (maxFiles && files.length >= maxFiles) {
+      if (maxFiles && filesRef.current.length >= maxFiles) {
         toast.error(`Maximum of ${maxFiles} files allowed.`);
         return;
       }
@@ -105,7 +111,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
       let filesToAdd = acceptedFiles;
 
       if (maxFiles) {
-        const availableSlots = maxFiles - files.length;
+        const availableSlots = maxFiles - filesRef.current.length;
         filesToAdd = acceptedFiles.slice(0, availableSlots);
       }
 
@@ -120,12 +126,8 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
         progress: 0,
       }));
 
-      if (!multiple) {
-        // Replace existing files
-        setFiles(newFiles);
-      } else {
-        setFiles((prevFiles) => [...prevFiles, ...newFiles]);
-      }
+      // Immediately add new files to the state
+      setFiles((prevFiles) => [...prevFiles, ...newFiles]);
 
       for (const fileData of newFiles) {
         const filePath = `${folderPath}/${fileData.id}`;
@@ -146,6 +148,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
           .from(bucketName)
           .getPublicUrl(filePath);
 
+        // Update the file data after upload
         setFiles((prevFiles) =>
           prevFiles.map((f) =>
             f.id === fileData.id
@@ -165,18 +168,17 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
       // Update parent component
       if (onChange) {
-        const updatedFiles = multiple ? [...files, ...newFiles] : newFiles[0];
-        onChange(updatedFiles);
+        onChange(multiple ? filesRef.current : filesRef.current[filesRef.current.length - 1]);
       }
     },
-    [bucketName, folderPath, files, onChange, multiple, maxFiles]
+    [bucketName, folderPath, onChange, multiple, maxFiles]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     multiple,
     accept: acceptedFileTypes.reduce((acc, type) => ({ ...acc, [type]: [] }), {}),
-    disabled: !multiple && files.length >= 1,
+    disabled: !multiple && filesRef.current.length >= 1,
   });
 
   const handleDelete = async (file: FileData, e: React.MouseEvent) => {
@@ -205,7 +207,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
     }
 
     // Remove the file from the local state
-    const updatedFiles = files.filter((f) => f.id !== file.id);
+    const updatedFiles = filesRef.current.filter((f) => f.id !== file.id);
     setFiles(updatedFiles);
     toast.success(`${file.name} deleted successfully.`);
 
@@ -231,7 +233,6 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   
 
   const renderFilePreview = (file: FileData) => {
-
     return (
       <Card key={file.id} className="flex items-center p-4">
         {/* Left: Image or Icon */}
@@ -265,7 +266,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
         {/* Right: Actions */}
         <div className="flex-shrink-0 ml-4">
           <div className="flex space-x-2">
-            {file.url && (
+            {file.url && !file.isUploading && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -286,7 +287,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                 e.stopPropagation();
                 setDeleteFile(file);
               }}
-              disabled={file.isDeleting}
+              disabled={file.isUploading || file.isDeleting}
             >
               <Trash className="w-4 h-4 text-red-500" />
             </Button>
@@ -298,7 +299,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
   return (
     <div>
-      {(!files.length || (multiple && files.length < (maxFiles || Infinity))) && (
+      {(!filesRef.current.length || (multiple && filesRef.current.length < (maxFiles || Infinity))) && (
         <div
           {...getRootProps()}
           className={`border-2 border-dashed p-6 rounded-md cursor-pointer ${

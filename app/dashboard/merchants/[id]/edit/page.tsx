@@ -22,6 +22,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { addMerchantFile, deleteMerchantFile, getMerchant,updateMerchantFiles } from '@/services/merchant.service';
 
 interface FormData {
   company_name: string;
@@ -36,7 +37,7 @@ const EditMerchantPage = () => {
   const { id } = useParams();
   const router = useRouter();
   const supabase = createClientComponentClient<Database>();
-  const { merchant, isLoading, error } = useMerchant(id as string);
+  const { merchant, merchantFiles, isLoading, error } = useMerchant(id as string);
 
   const form = useForm<FormData>();
 
@@ -49,14 +50,13 @@ const EditMerchantPage = () => {
         company_name: merchant.company_name,
         description: merchant.description || '',
         logo: merchant.logo,
-        files: merchant.files || [] as any,
       };
-      setOriginalData(initialData);
+      setOriginalData(initialData as any);
       Object.entries(initialData).forEach(([key, value]) => {
         form.setValue(key as keyof FormData, value);
       });
     }
-  }, [merchant, id]);
+  }, [merchant, form]);
 
   const updateField = useCallback(async (field: string, value: any) => {
     if (JSON.stringify(originalData?.[field as keyof FormData]) === JSON.stringify(value)) {
@@ -83,6 +83,33 @@ const EditMerchantPage = () => {
   }, [id, supabase, originalData]);
 
   const debouncedUpdateField = useCallback(debounce(updateField, 500), [updateField]);
+
+  const handleFileUpload = async (file: File) => {
+    if (!id) return;
+
+    const fileName = `${Date.now()}-${file.name}`;
+    const { data, error } = await supabase.storage
+      .from('merchants')
+      .upload(`${id}/files/${fileName}`, file);
+
+    if (error) {
+      console.error('Error uploading file:', error);
+      toast.error('Failed to upload file');
+      return null;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('merchants')
+      .getPublicUrl(`${id}/files/${fileName}`);
+
+    return {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      url: publicUrlData.publicUrl,
+      merchant_id: id,
+    };
+  };
 
   if (isLoading) return <PageLoader />;
   if (error) return <div>Error: {error.message}</div>;
@@ -159,17 +186,27 @@ const EditMerchantPage = () => {
           <FormField
             control={form.control}
             name="files"
-            render={({ field }) => (
+            render={() => (
               <FormItem>
                 <FormLabel>Additional Files</FormLabel>
                 <FormControl>
                   <FileUploader
                     bucketName="merchants"
                     folderPath={`${id}/files`}
-                    value={field.value}
-                    onChange={(files) => {
-                      field.onChange(files);
-                      debouncedUpdateField('files', files);
+                    value={merchantFiles}
+                    onChange={async (files) => {
+                      console.debug('files', files);
+                      const updatedFiles = files?.map((file: any) => ({
+                        id: file.id,
+                        file: { path: file.file.path },
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                        url: file.url,
+                        progress: file.progress,
+                        merchant_id: id as string,
+                      }));
+                      await updateMerchantFiles(id as string, updatedFiles);
                     }}
                     multiple={true}
                     acceptedFileTypes={['image/*', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']}
