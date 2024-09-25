@@ -4,69 +4,70 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 type Database = any;
 
-export interface MerchantMandate {
+export interface Merchant {
   id: string;
   company_name: string;
   logo: any;
   description: string | null;
+  files?: any[];
   created_at: string;
   updated_at: string;
 }
 
-export const getMerchantMandates = async (): Promise<MerchantMandate[]> => {
+export const getMerchants = async (): Promise<Merchant[]> => {
   const supabase = createServerComponentClient<Database>({ cookies });
   const { data, error } = await supabase
-    .from('merchant_mandates')
+    .from('merchants')
     .select('*')
     .order('company_name', { ascending: true });
 
   if (error) throw error;
-  return data as MerchantMandate[];
+  return data as Merchant[];
 };
 
-export const getMerchantMandate = async (id: string): Promise<MerchantMandate | null> => {
+export const getMerchant = async (id: string): Promise<Merchant | null> => {
   const supabase = createServerComponentClient<Database>({ cookies });
   const { data, error } = await supabase
-    .from('merchant_mandates')
+    .from('merchants')
     .select('*')
     .eq('id', id)
     .single();
 
   if (error) throw error;
-  return data as MerchantMandate;
+  return data as Merchant;
 };
 
-export const createMerchantMandate = async (
-  mandate: Omit<MerchantMandate, 'id' | 'created_at' | 'updated_at'>
-): Promise<MerchantMandate> => {
+export const createMerchant = async (
+  merchant: Omit<Merchant, 'id' | 'created_at' | 'updated_at'>
+): Promise<Merchant> => {
   const supabase = createServerComponentClient<Database>({ cookies });
   const { data, error } = await supabase
-    .from('merchant_mandates')
-    .insert(mandate)
+    .from('merchants')
+    .insert(merchant)
     .select()
     .single();
 
   if (error) throw error;
-  return data as MerchantMandate;
+  return data as Merchant;
 };
 
-export const updateMerchantMandate = async (
+export const updateMerchant = async (
   id: string,
-  mandate: Partial<Omit<MerchantMandate, 'id' | 'created_at' | 'updated_at'>>
+  merchant: Partial<Omit<Merchant, 'id' | 'created_at' | 'updated_at'>>
 ): Promise<void> => {
   const supabase = createServerComponentClient<Database>({ cookies });
   const { error } = await supabase
-    .from('merchant_mandates')
-    .update(mandate)
+    .from('merchants')
+    .update(merchant)
     .eq('id', id);
 
   if (error) throw error;
 };
 
-export const deleteMerchantMandate = async (id: string): Promise<void> => {
+export const deleteMerchant = async (id: string): Promise<void> => {
   const supabase = createServerComponentClient<Database>({ cookies });
   const { error } = await supabase
-    .from('merchant_mandates')
+    .from('merchants')
     .delete()
     .eq('id', id);
 

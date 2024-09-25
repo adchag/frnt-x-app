@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { getMerchantMandate, getMerchantMandates,MerchantMandate } from '@/services/merchant.service'
+import { getMerchant, getMerchants, Merchant } from '@/services/merchant.service'
 export const useMerchant = (id?: string) => {
-  const [merchant, setMerchant] = useState<MerchantMandate | null>(null)
-  const [merchants, setMerchants] = useState<MerchantMandate[]>([])
+  const [merchant, setMerchant] = useState<Merchant | null>(null)
+    const [merchants, setMerchants] = useState<Merchant[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
@@ -11,11 +11,11 @@ export const useMerchant = (id?: string) => {
       setIsLoading(true)
       try {
         if (id) {
-          const data = await getMerchantMandate(id)
-          setMerchant(data as MerchantMandate)
+          const data = await getMerchant(id)
+          setMerchant(data as Merchant)
         } else {
-          const data = await getMerchantMandates()
-          setMerchants(data as MerchantMandate[])
+          const data = await getMerchants()
+          setMerchants(data as Merchant[])
         }
       } catch (err) {
         setError(err instanceof Error ? err : new Error('An error occurred'))

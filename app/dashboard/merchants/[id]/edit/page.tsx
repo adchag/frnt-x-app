@@ -32,7 +32,7 @@ interface FormData {
 
 type Database = any;
 
-const EditMerchantMandatePage = () => {
+const EditMerchantPage = () => {
   const { id } = useParams();
   const router = useRouter();
   const supabase = createClientComponentClient<Database>();
@@ -49,7 +49,7 @@ const EditMerchantMandatePage = () => {
         company_name: merchant.company_name,
         description: merchant.description || '',
         logo: merchant.logo,
-        files: merchant.files || [],
+        files: merchant.files || [] as any,
       };
       setOriginalData(initialData);
       Object.entries(initialData).forEach(([key, value]) => {
@@ -66,7 +66,7 @@ const EditMerchantMandatePage = () => {
     setIsUpdating(true);
     if (id) {
       const { error } = await supabase
-        .from('merchant_mandates')
+        .from('merchants')
         .update({ [field]: value })
         .eq('id', id);
 
@@ -189,4 +189,4 @@ const EditMerchantMandatePage = () => {
   );
 };
 
-export default EditMerchantMandatePage;
+export default EditMerchantPage;

@@ -4,16 +4,16 @@ import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import { useMerchant } from '@/app/hooks/use-merchant'
 import { Button } from '@/components/ui/button'
-import { deleteMerchantMandate } from '@/services/merchant.service'
+import { deleteMerchant } from '@/services/merchant.service'
 import PageLoader from '@/components/page-loader'
 
-const MerchantMandatePage = () => {
+const MerchantPage = () => {
   const { id } = useParams()
   const { merchant, isLoading, error } = useMerchant(id as string)
 
   const handleDelete = async () => {
     if (id) {
-      await deleteMerchantMandate(id as string)
+      await deleteMerchant(id as string)
       // Redirect to the merchants list page after deletion
       // You might want to use a routing library or Next.js router for this
     }
@@ -53,4 +53,4 @@ const MerchantMandatePage = () => {
   )
 }
 
-export default MerchantMandatePage
+export default MerchantPage

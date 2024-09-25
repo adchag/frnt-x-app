@@ -1,22 +1,22 @@
 import { Metadata } from 'next'
-import { createMerchantMandate } from '@/services/merchant.service'
+import { createMerchant } from '@/services/merchant.service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
 export const metadata: Metadata = {
-  title: 'Create Merchant Mandate',
-  description: 'Create a new merchant banking mandate',
+  title: 'Create Merchant',
+  description: 'Create a new merchant',
 }
 
-const CreateMerchantMandatePage = () => {
+const CreateMerchantPage = () => {
   const handleSubmit = async (formData: FormData) => {
     'use server'
     const company_name = formData.get('company_name') as string
     const logo_url = formData.get('logo_url') as string
     const description = formData.get('description') as string
 
-    await createMerchantMandate({
+    await createMerchant({
       company_name,
       logo: {url:logo_url},
       description,
@@ -28,7 +28,7 @@ const CreateMerchantMandatePage = () => {
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-6">Create Merchant Mandate</h1>
+      <h1 className="text-3xl font-bold mb-6">Create Merchant</h1>
       <form action={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="company_name" className="block text-sm font-medium text-gray-700">
@@ -54,4 +54,4 @@ const CreateMerchantMandatePage = () => {
   )
 }
 
-export default CreateMerchantMandatePage
+export default CreateMerchantPage

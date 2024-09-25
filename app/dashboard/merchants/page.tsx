@@ -9,14 +9,14 @@ import { ColumnDef } from '@tanstack/react-table'
 import PageLoader from '@/components/page-loader'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-interface MerchantMandate {
+interface Merchant {
   id: string
   company_name: string
   description: string
   logo_url: string
 }
 
-const columns: ColumnDef<MerchantMandate>[] = [
+const columns: ColumnDef<Merchant>[] = [
   {
     id: 'avatar',
     cell: ({ row }) => (
