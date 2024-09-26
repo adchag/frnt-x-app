@@ -7,8 +7,8 @@ import { createClient } from '@/lib/supabase-client';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User } from '@supabase/supabase-js';
-import { Building, Users, FileText, Moon, Sun } from 'lucide-react';
-import { useTheme } from "next-themes"
+import { Building, Moon, Sun, Users } from 'lucide-react';
+import { useTheme } from "next-themes";
 
 export default function DashboardLayout({
   children,
@@ -41,10 +41,8 @@ export default function DashboardLayout({
   if (!user) return null;
 
   const getActiveTab = () => {
-    if (pathname === '/dashboard') return 'assistants';
     if (pathname.startsWith('/dashboard/merchants')) return 'merchants';
-    if (pathname === '/dashboard/convert-pdf') return 'convert-pdf';
-    return 'assistants'; // default to assistants if no match
+    return 'merchants'; // default to merchants if no match
   };
 
   return (
@@ -65,22 +63,10 @@ export default function DashboardLayout({
         </div>
         <Tabs value={getActiveTab()} className="w-full" orientation="vertical">
           <TabsList className="flex flex-col items-stretch h-full">
-            <TabsTrigger value="assistants" asChild className="justify-start">
-              <Link href="/dashboard" className="flex items-center">
-                <Building className="mr-2" />
-                Assistants
-              </Link>
-            </TabsTrigger>
             <TabsTrigger value="merchants" asChild className="justify-start">
               <Link href="/dashboard/merchants" className="flex items-center">
                 <Users className="mr-2" />
                 Merchants
-              </Link>
-            </TabsTrigger>
-            <TabsTrigger value="convert-pdf" asChild className="justify-start">
-              <Link href="/dashboard/convert-pdf" className="flex items-center">
-                <FileText className="mr-2" />
-                Convert PDF
               </Link>
             </TabsTrigger>
           </TabsList>

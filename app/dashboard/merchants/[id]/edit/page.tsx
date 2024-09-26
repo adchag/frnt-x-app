@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
-import { useMerchant } from '@/app/hooks/use-merchant';
+import { useMerchant } from '@/hooks/use-merchant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,6 +23,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { addMerchantFile, deleteMerchantFile, getMerchant,updateMerchantFiles } from '@/services/merchant.service';
+import { useAssistants } from '@/hooks/use-assistants';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { createAssistant, updateAssistant, sendMessage } from '@/services/openai.service';
+import Link from 'next/link';
 
 interface FormData {
   company_name: string;
@@ -38,6 +42,8 @@ const EditMerchantPage = () => {
   const router = useRouter();
   const supabase = createClientComponentClient<Database>();
   const { merchant, merchantFiles, isLoading, error } = useMerchant(id as string);
+  const { assistants, isLoading: isLoadingAssistants } = useAssistants();
+  const [selectedAssistant, setSelectedAssistant] = useState<string | null>(null);
 
   const form = useForm<FormData>();
 
@@ -57,6 +63,12 @@ const EditMerchantPage = () => {
       });
     }
   }, [merchant, form]);
+
+  useEffect(() => {
+    if (merchant && merchant.assistant_id) {
+      setSelectedAssistant(merchant.assistant_id);
+    }
+  }, [merchant]);
 
   const updateField = useCallback(async (field: string, value: any) => {
     if (JSON.stringify(originalData?.[field as keyof FormData]) === JSON.stringify(value)) {
@@ -109,6 +121,46 @@ const EditMerchantPage = () => {
       url: publicUrlData.publicUrl,
       merchant_id: id,
     };
+  };
+
+  const handleAssistantChange = async (assistantId: string) => {
+    setSelectedAssistant(assistantId);
+    await updateField('assistant_id', assistantId);
+  };
+
+  const handleCreateAssistant = async () => {
+    if (!merchant) return;
+
+    const newAssistant = await createAssistant(
+      `${merchant.company_name} Assistant`,
+      `Assistant for ${merchant.company_name}`,
+      `You are an assistant for ${merchant.company_name}. ${merchant.description || ''}`
+    );
+
+    setSelectedAssistant(newAssistant.id);
+    await updateField('assistant_id', newAssistant.id);
+  };
+
+  const handleSyncFiles = async () => {
+    if (!selectedAssistant || !merchantFiles) return;
+
+    const filesToSync = merchantFiles.map(file => ({
+      filename: file.name,
+      content: file.url,
+    }));
+
+    await updateAssistant(selectedAssistant, {
+      name: merchant?.company_name || '',
+      description: merchant?.description || '',
+      instructions: `You are an assistant for ${merchant?.company_name}. ${merchant?.description || ''}`,
+      file_ids: filesToSync.map(file => file.filename),
+    });
+
+    for (const file of filesToSync) {
+      await sendMessage(selectedAssistant, `Please process and understand the content of this file: ${file.content}`);
+    }
+
+    toast.success('Files synchronized with assistant');
   };
 
   if (isLoading) return <PageLoader />;
@@ -221,6 +273,40 @@ const EditMerchantPage = () => {
           />
         </form>
       </Form>
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold mb-4">OpenAI Assistant</h2>
+        {isLoadingAssistants ? (
+          <p>Loading assistants...</p>
+        ) : (
+          <>
+            <Select value={selectedAssistant || ''} onValueChange={handleAssistantChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select an assistant" />
+              </SelectTrigger>
+              <SelectContent>
+                {assistants.map((assistant) => (
+                  <SelectItem key={assistant.id} value={assistant.id}>
+                    {assistant.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="mt-4 space-x-4">
+              <Button onClick={handleCreateAssistant} disabled={!!selectedAssistant}>
+                Create New Assistant
+              </Button>
+              <Button onClick={handleSyncFiles} disabled={!selectedAssistant}>
+                Sync Files with Assistant
+              </Button>
+              {selectedAssistant && (
+                <Link href={`/dashboard/assistant/edit/${selectedAssistant}`}>
+                  <Button variant="outline">Edit Assistant</Button>
+                </Link>
+              )}
+            </div>
+          </>
+        )}
+      </div>
       {isUpdating && <p className="text-blue-500 mt-4">Updating...</p>}
     </div>
   );

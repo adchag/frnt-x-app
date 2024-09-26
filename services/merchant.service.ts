@@ -9,6 +9,7 @@ export interface Merchant {
   company_name: string;
   logo: any;
   description: string | null;
+  assistant_id: string | null;
   created_at: string;
   updated_at: string;
 }
