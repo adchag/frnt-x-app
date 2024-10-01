@@ -10,6 +10,7 @@ export interface Merchant {
   logo: any;
   description: string | null;
   assistant_id: string | null;
+  oa_assistant_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -74,14 +75,11 @@ export const createMerchant = async (
   return data as Merchant;
 };
 
-export const updateMerchant = async (
-  id: string,
-  merchant: Partial<Omit<Merchant, 'id' | 'created_at' | 'updated_at'>>
-): Promise<void> => {
+export const updateMerchant = async (id: string, data: Partial<Merchant>) => {
   const supabase = createServerComponentClient<Database>({ cookies });
   const { error } = await supabase
     .from('merchants')
-    .update(merchant)
+    .update(data)
     .eq('id', id);
 
   if (error) throw error;

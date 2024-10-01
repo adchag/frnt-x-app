@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, FormProvider, UseFormReturn } from 'react-hook-form';
 import { useMerchant } from '@/hooks/use-merchant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,11 +22,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { addMerchantFile, deleteMerchantFile, getMerchant,updateMerchantFiles } from '@/services/merchant.service';
-import { useAssistants } from '@/hooks/use-assistants';
+import { addMerchantFile, deleteMerchantFile, getMerchant, updateMerchantFiles } from '@/services/merchant.service';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createAssistant, updateAssistant, sendMessage } from '@/services/openai.service';
 import Link from 'next/link';
+import { create_assistant, list_assistants, updateAssistant, sendMessage, list_models } from '@/services/oa.service';
 
 interface FormData {
   company_name: string;
@@ -35,17 +34,42 @@ interface FormData {
   files: any[];
 }
 
+interface AssistantFormData {
+  name: string;
+  instructions: string;
+  model: string;
+}
+
 type Database = any;
+
+interface FormProps extends UseFormReturn<FormData> {
+  children: React.ReactNode;
+  className?: string;
+  onSubmit?: (e?: React.BaseSyntheticEvent) => Promise<void>;
+}
+
+const CustomForm: React.FC<FormProps> = ({ children, className, onSubmit, ...formMethods }) => (
+  <FormProvider {...formMethods}>
+    <form className={className} onSubmit={onSubmit}>
+      {children}
+    </form>
+  </FormProvider>
+);
 
 const EditMerchantPage = () => {
   const { id } = useParams();
   const router = useRouter();
   const supabase = createClientComponentClient<Database>();
   const { merchant, merchantFiles, isLoading, error } = useMerchant(id as string);
-  const { assistants, isLoading: isLoadingAssistants } = useAssistants();
+  const [assistants, setAssistants] = useState<any[]>([]);
+  const [isLoadingAssistants, setIsLoadingAssistants] = useState(true);
   const [selectedAssistant, setSelectedAssistant] = useState<string | null>(null);
+  const [assistantData, setAssistantData] = useState<AssistantFormData | null>(null);
+  const [models, setModels] = useState<any[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>('gpt-4o');
 
   const form = useForm<FormData>();
+  const assistantForm = useForm<AssistantFormData>();
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [originalData, setOriginalData] = useState<FormData | null>(null);
@@ -65,10 +89,57 @@ const EditMerchantPage = () => {
   }, [merchant, form]);
 
   useEffect(() => {
-    if (merchant && merchant.assistant_id) {
-      setSelectedAssistant(merchant.assistant_id);
+    if (merchant && merchant.oa_assistant_id) {
+      setSelectedAssistant(merchant.oa_assistant_id);
     }
   }, [merchant]);
+
+  useEffect(() => {
+    const fetchAssistants = async () => {
+      setIsLoadingAssistants(true);
+      try {
+        const data = await list_assistants();
+        setAssistants(data);
+      } catch (err) {
+        console.error('Error fetching assistants:', err);
+      } finally {
+        setIsLoadingAssistants(false);
+      }
+    };
+
+    fetchAssistants();
+  }, []);
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const data = await list_models();
+        setModels(data);
+      } catch (err) {
+        console.error('Error fetching models:', err);
+      }
+    };
+
+    fetchModels();
+  }, []);
+
+  useEffect(() => {
+    if (selectedAssistant) {
+      const assistant = assistants.find(a => a.id === selectedAssistant);
+      console.debug('assistant', assistant);
+      if (assistant) {
+        setAssistantData({
+          name: assistant.name,
+          instructions: assistant.instructions,
+          model: assistant.model,
+        });
+        assistantForm.setValue('name', assistant.name);
+        assistantForm.setValue('instructions', assistant.instructions);
+        assistantForm.setValue('model', assistant.model);
+        setSelectedModel(assistant.model);
+      }
+    }
+  }, [selectedAssistant, assistants, assistantForm]);
 
   const updateField = useCallback(async (field: string, value: any) => {
     if (JSON.stringify(originalData?.[field as keyof FormData]) === JSON.stringify(value)) {
@@ -96,71 +167,28 @@ const EditMerchantPage = () => {
 
   const debouncedUpdateField = useCallback(debounce(updateField, 500), [updateField]);
 
-  const handleFileUpload = async (file: File) => {
-    if (!id) return;
-
-    const fileName = `${Date.now()}-${file.name}`;
-    const { data, error } = await supabase.storage
-      .from('merchants')
-      .upload(`${id}/files/${fileName}`, file);
-
-    if (error) {
-      console.error('Error uploading file:', error);
-      toast.error('Failed to upload file');
-      return null;
-    }
-
-    const { data: publicUrlData } = supabase.storage
-      .from('merchants')
-      .getPublicUrl(`${id}/files/${fileName}`);
-
-    return {
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      url: publicUrlData.publicUrl,
-      merchant_id: id,
-    };
-  };
-
   const handleAssistantChange = async (assistantId: string) => {
     setSelectedAssistant(assistantId);
-    await updateField('assistant_id', assistantId);
+    await updateField('oa_assistant_id', assistantId);
   };
 
-  const handleCreateAssistant = async () => {
-    if (!merchant) return;
+  const handleAssistantFormSubmit = async (data: AssistantFormData) => {
+    if (!selectedAssistant) return;
 
-    const newAssistant = await createAssistant(
-      `${merchant.company_name} Assistant`,
-      `Assistant for ${merchant.company_name}`,
-      `You are an assistant for ${merchant.company_name}. ${merchant.description || ''}`
-    );
-
-    setSelectedAssistant(newAssistant.id);
-    await updateField('assistant_id', newAssistant.id);
-  };
-
-  const handleSyncFiles = async () => {
-    if (!selectedAssistant || !merchantFiles) return;
-
-    const filesToSync = merchantFiles.map(file => ({
-      filename: file.name,
-      content: file.url,
-    }));
-
-    await updateAssistant(selectedAssistant, {
-      name: merchant?.company_name || '',
-      description: merchant?.description || '',
-      instructions: `You are an assistant for ${merchant?.company_name}. ${merchant?.description || ''}`,
-      file_ids: filesToSync.map(file => file.filename),
-    });
-
-    for (const file of filesToSync) {
-      await sendMessage(selectedAssistant, `Please process and understand the content of this file: ${file.content}`);
+    setIsUpdating(true);
+    try {
+      await updateAssistant(selectedAssistant, {
+        name: data.name,
+        instructions: data.instructions,
+        model: data.model,
+      });
+      toast.success('Assistant updated successfully');
+    } catch (error) {
+      console.error('Error updating assistant:', error);
+      toast.error('Failed to update assistant');
+    } finally {
+      setIsUpdating(false);
     }
-
-    toast.success('Files synchronized with assistant');
   };
 
   if (isLoading) return <PageLoader />;
@@ -176,105 +204,102 @@ const EditMerchantPage = () => {
         </Button>
       </div>
       <h1 className="text-3xl font-bold mb-6">Edit Merchant Mandate</h1>
-      <Form {...form}>
-        <form className="space-y-4">
-          <FormField
-            control={form.control}
-            name="company_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Company Name</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    onBlur={() => debouncedUpdateField('company_name', field.value)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="logo"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Logo</FormLabel>
-                <FormControl>
-                  <FileUploader
-                    bucketName="merchants"
-                    folderPath={`${id}/logos`}
-                    value={field.value}
-                    onChange={(files) => {
-                      const file = Array.isArray(files) ? files[0] : files;
-                      field.onChange(file);
-                      debouncedUpdateField('logo', file);
-                    }}
-                    multiple={false}
-                    acceptedFileTypes={['image/*']}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Textarea
-                    {...field}
-                    rows={4}
-                    onBlur={() => debouncedUpdateField('description', field.value)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="files"
-            render={() => (
-              <FormItem>
-                <FormLabel>Additional Files</FormLabel>
-                <FormControl>
-                  <FileUploader
-                    bucketName="merchants"
-                    folderPath={`${id}/files`}
-                    value={merchantFiles}
-                    onChange={async (files) => {
-                      console.debug('files', files);
-                      const updatedFiles = files?.map((file: any) => ({
-                        id: file.id,
-                        file: { path: file.file.path },
-                        name: file.name,
-                        size: file.size,
-                        type: file.type,
-                        url: file.url,
-                        progress: file.progress,
-                        merchant_id: id as string,
-                      }));
-                      await updateMerchantFiles(id as string, updatedFiles);
-                    }}
-                    multiple={true}
-                    acceptedFileTypes={['image/*', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Upload additional files related to the merchant (images, PDFs, Word documents)
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </form>
-      </Form>
+      <CustomForm {...form} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="company_name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Company Name</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  onBlur={() => debouncedUpdateField('company_name', field.value)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="logo"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Logo</FormLabel>
+              <FormControl>
+                <FileUploader
+                  bucketName="merchants"
+                  folderPath={`${id}/logos`}
+                  value={field.value}
+                  onChange={(files) => {
+                    const file = Array.isArray(files) ? files[0] : files;
+                    field.onChange(file);
+                    debouncedUpdateField('logo', file);
+                  }}
+                  multiple={false}
+                  acceptedFileTypes={['image/*']}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea
+                  {...field}
+                  rows={4}
+                  onBlur={() => debouncedUpdateField('description', field.value)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="files"
+          render={() => (
+            <FormItem>
+              <FormLabel>Additional Files</FormLabel>
+              <FormControl>
+                <FileUploader
+                  bucketName="merchants"
+                  folderPath={`${id}/files`}
+                  value={merchantFiles}
+                  onChange={async (files) => {
+                    const updatedFiles = files?.map((file: any) => ({
+                      id: file.id,
+                      file: { path: file.file.path },
+                      name: file.name,
+                      size: file.size,
+                      type: file.type,
+                      url: file.url,
+                      progress: file.progress,
+                      merchant_id: id as string,
+                    }));
+                    await updateMerchantFiles(id as string, updatedFiles);
+                  }}
+                  multiple={true}
+                  acceptedFileTypes={['image/*', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']}
+                />
+              </FormControl>
+              <FormDescription>
+                Upload additional files related to the merchant (images, PDFs, Word documents)
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </CustomForm>
       <div className="mt-8">
-        <h2 className="text-2xl font-bold mb-4">OpenAI Assistant</h2>
+        <h2 className="text-lg font-bold mb-4">OpenAI Assistant</h2>
         {isLoadingAssistants ? (
           <p>Loading assistants...</p>
         ) : (
@@ -291,19 +316,66 @@ const EditMerchantPage = () => {
                 ))}
               </SelectContent>
             </Select>
-            <div className="mt-4 space-x-4">
-              <Button onClick={handleCreateAssistant} disabled={!!selectedAssistant}>
-                Create New Assistant
-              </Button>
-              <Button onClick={handleSyncFiles} disabled={!selectedAssistant}>
-                Sync Files with Assistant
-              </Button>
-              {selectedAssistant && (
-                <Link href={`/dashboard/assistant/edit/${selectedAssistant}`}>
-                  <Button variant="outline">Edit Assistant</Button>
-                </Link>
-              )}
-            </div>
+            {selectedAssistant && assistantData && (
+              <CustomForm {...assistantForm as any} onSubmit={assistantForm.handleSubmit(handleAssistantFormSubmit) as any} className="space-y-4 mt-4">
+                <FormField
+                  control={assistantForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assistant Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={assistantForm.control}
+                  name="instructions"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Instructions</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} rows={4} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={assistantForm.control}
+                  name="model"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Model</FormLabel>
+                      <FormControl>
+                        <Select value={field.value} onValueChange={(value) => {
+                          field.onChange(value);
+                          setSelectedModel(value);
+                        }}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a model" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {models.map((model) => (
+                              <SelectItem key={model.id} value={model.id}>
+                                {model.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" isLoading={isUpdating}>
+                  {isUpdating ? 'Updating...' : 'Update Assistant'}
+                </Button>
+              </CustomForm>
+            )}
           </>
         )}
       </div>

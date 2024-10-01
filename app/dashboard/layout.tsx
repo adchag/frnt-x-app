@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase-client';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User } from '@supabase/supabase-js';
-import { Building, Moon, Sun, Users } from 'lucide-react';
+import { Brain, Building, Moon, Sun, Users } from 'lucide-react';
 import { useTheme } from "next-themes";
 
 export default function DashboardLayout({
@@ -42,6 +42,7 @@ export default function DashboardLayout({
 
   const getActiveTab = () => {
     if (pathname.startsWith('/dashboard/merchants')) return 'merchants';
+    if (pathname.startsWith('/dashboard/assistants')) return 'assistants';
     return 'merchants'; // default to merchants if no match
   };
 
@@ -67,6 +68,12 @@ export default function DashboardLayout({
               <Link href="/dashboard/merchants" className="flex items-center">
                 <Users className="mr-2" />
                 Merchants
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="assistants" asChild className="justify-start">
+              <Link href="/dashboard/assistants" className="flex items-center">
+                <Brain className="mr-2" />
+                Assistants
               </Link>
             </TabsTrigger>
           </TabsList>

@@ -10,37 +10,55 @@ const openai = new OpenAI({
 
 // Assistant-related functions
 
-interface Assistant {
-  instructions: string;
-  name: string;
-  model: string;
+export interface Assistant {
+  instructions?: string;
+  name?: string;
+  model: string | OpenAI.ChatModel;
+  file_ids?: string[];
 }
 
-
-export const create_assistant = async ({instructions,name,model}:Assistant) => {
+export const create_assistant = async ({ instructions, name, model }: Assistant) => {
   const assistant = await openai.beta.assistants.create({
     instructions,
     name,
-    model:'gpt-4o',
+    model,
     tools: [
-      {type: "code_interpreter" },
-      {type: "file_search"},
+      { type: "code_interpreter" },
+      { type: "file_search" },
     ],
   });
   return { assistantId: assistant.id };
 };
 
-const list_assistants = async () => {
+export const list_assistants = async () => {
   const assistants = await openai.beta.assistants.list();
   return assistants.data.map(assistant => ({
     id: assistant.id,
     name: assistant.name,
     model: assistant.model,
+    instructions: assistant.instructions,
     createdAt: assistant.created_at,
   }));
 };
 
+export const updateAssistant = async (assistantId: string, updates: Partial<Assistant>) => {
+  const updatedAssistant = await openai.beta.assistants.update(assistantId, updates);
+  return updatedAssistant;
+};
 
+export const sendMessage = async (assistantId: string, content: string) => {
+  const thread = await openai.beta.threads.create();
+  await openai.beta.threads.messages.create(thread.id, {
+    role: "user",
+    content: content,
+  });
+
+  const stream = openai.beta.threads.runs.stream(thread.id, {
+    assistant_id: assistantId,
+  });
+
+  return stream.toReadableStream();
+};
 
 export const create_thread = async () => {
   const thread = await openai.beta.threads.create();
@@ -162,4 +180,12 @@ export const list_files_in_vector_store = async (assistantId: string) => {
 export const delete_file_from_vector_store = async (assistantId: string, fileId: string) => {
   const vectorStoreId = await get_or_create_vector_store(assistantId);
   await openai.beta.vectorStores.files.del(vectorStoreId, fileId);
+};
+
+export const list_models = async () => {
+  const models = await openai.models.list();
+  return models.data.map(model => ({
+    id: model.id,
+    name: model.id,
+  }));
 };
