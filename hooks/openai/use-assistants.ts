@@ -33,7 +33,7 @@ const useAssistants = () => {
     setIsLoading(true);
     try {
       const data = await list_assistants();
-      setAssistants(data);
+      setAssistants(data as Assistant[]);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
