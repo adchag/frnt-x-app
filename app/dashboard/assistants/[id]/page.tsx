@@ -30,7 +30,7 @@ const AssistantThreadsPage = ({ params }: { params: { id: string } }) => {
         </div>
       </div>
       
-      <EditAssistantCard assistant={assistant} />
+      <EditAssistantCard assistant={assistant} onUpdate={refetch} />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
         {threads.map((thread) => (

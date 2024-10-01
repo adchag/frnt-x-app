@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { get_thread, create_message, run_assistant, get_messages, check_run_status } from '@/actions/openai/assistant.action';
+import { get_thread, create_message, run_assistant, get_messages, check_run_status, get_assistant } from '@/actions/openai/assistant.action';
 
 interface MessageContent {
   type: string;
@@ -58,7 +58,17 @@ const useAssistantThread = (threadId: string, assistantId: string) => {
     }
   };
 
-  return { messages, isLoading, error, sendMessage };
+  const refetchAssistant = useCallback(async () => {
+    try {
+      const updatedAssistant = await get_assistant(assistantId);
+      // You might want to update the assistant state here if you're storing it
+      return updatedAssistant;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to refetch assistant');
+    }
+  }, [assistantId]);
+
+  return { messages, isLoading, error, sendMessage, refetchAssistant };
 };
 
 export default useAssistantThread;

@@ -105,3 +105,16 @@ export const check_run_status = async (threadId: string, runId: string) => {
   const run = await openai.beta.threads.runs.retrieve(threadId, runId);
   return run;
 };
+
+export const update_assistant = async (assistantId: string, data: any) => {
+  const assistant = await openai.beta.assistants.update(assistantId, {
+    name: data.name,
+    description: data.description,
+    instructions: data.instructions,
+    model: data.model,
+    temperature: data.temperature,
+    response_format: data.response_format,
+    // Add other fields as needed
+  });
+  return assistant;
+};

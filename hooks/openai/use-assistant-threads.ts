@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { list_assistant_threads, get_assistant, create_thread } from '@/actions/openai/assistant.action';
 
 interface Thread {
@@ -19,39 +19,30 @@ const useAssistantThreads = (assistantId: string) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const [threadsData, assistantData] = await Promise.all([
-          list_assistant_threads(assistantId),
-          get_assistant(assistantId)
-        ]);
-        setThreads(threadsData);
-        setAssistant(assistantData as Assistant);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [assistantId]);
-
-  const refetch = async () => {
-    setIsLoading(true);
+  const fetchData = useCallback(async () => {
     try {
-      const data = await list_assistant_threads(assistantId);
-      setThreads(data);
+      setIsLoading(true);
+      const [threadsData, assistantData] = await Promise.all([
+        list_assistant_threads(assistantId),
+        get_assistant(assistantId)
+      ]);
+      setThreads(threadsData);
+      setAssistant(assistantData as Assistant);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [assistantId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const refetch = useCallback(() => {
+    return fetchData();
+  }, [fetchData]);
 
   const addThread = async () => {
     try {
