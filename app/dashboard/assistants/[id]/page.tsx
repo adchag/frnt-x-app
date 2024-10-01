@@ -5,6 +5,7 @@ import useAssistantThreads from "@/hooks/openai/use-assistant-threads";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatDistanceToNow } from 'date-fns';
+import { EditAssistantCard } from '@/components/edit-assistant-card';
 
 const AssistantThreadsPage = ({ params }: { params: { id: string } }) => {
   const router = useRouter();
@@ -28,9 +29,12 @@ const AssistantThreadsPage = ({ params }: { params: { id: string } }) => {
           </Button>
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      
+      <EditAssistantCard assistant={assistant} />
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
         {threads.map((thread) => (
-          <Card key={thread.id}>
+          <Card key={thread.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push(`/dashboard/assistants/${params.id}/thread/${thread.id}`)}>
             <CardHeader>
               <CardTitle>Thread {thread.id.slice(-4)}</CardTitle>
             </CardHeader>

@@ -70,3 +70,38 @@ export const delete_thread = async (threadId: string) => {
   if (error) throw new Error(error.message);
   return true;
 };
+
+// Get a specific thread
+export const get_thread = async (threadId: string) => {
+  const thread = await openai.beta.threads.retrieve(threadId);
+  return thread;
+};
+
+// Create a new message in a thread
+export const create_message = async (threadId: string, content: string) => {
+  const message = await openai.beta.threads.messages.create(threadId, {
+    role: "user",
+    content: content,
+  });
+  return message;
+};
+
+// Run an assistant in a thread
+export const run_assistant = async (threadId: string, assistantId: string) => {
+  const run = await openai.beta.threads.runs.create(threadId, {
+    assistant_id: assistantId,
+  });
+  return run;
+};
+
+// Get messages in a thread
+export const get_messages = async (threadId: string) => {
+  const messages = await openai.beta.threads.messages.list(threadId);
+  return messages.data;
+};
+
+// Check the status of a run
+export const check_run_status = async (threadId: string, runId: string) => {
+  const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+  return run;
+};
