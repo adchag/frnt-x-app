@@ -20,7 +20,7 @@ const CreateMerchantPage = () => {
       company_name,
       logo: {url:logo_url},
       description,
-    })
+    } as any)
 
     // Redirect to the merchants list page after creation
     // You might want to use a client component for this action to handle the redirect on the client side
