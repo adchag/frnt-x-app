@@ -4,7 +4,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
-export const AssistantForm = ({ assistantForm, models, selectedModel, setSelectedModel, handleAssistantFormSubmit, isUpdating }) => (
+interface AssistantFormProps {
+  assistantForm: any;
+  models: any;
+  selectedModel: any;
+  setSelectedModel: any;
+  handleAssistantFormSubmit: any;
+  isUpdating: any;
+}
+
+export const AssistantForm = ({ assistantForm, models, selectedModel, setSelectedModel, handleAssistantFormSubmit, isUpdating }: AssistantFormProps) => (
   <form onSubmit={assistantForm.handleSubmit(handleAssistantFormSubmit)} className="space-y-4 mt-4">
     <FormField
       control={assistantForm.control}
@@ -47,7 +56,7 @@ export const AssistantForm = ({ assistantForm, models, selectedModel, setSelecte
                 <SelectValue placeholder="Select a model" />
               </SelectTrigger>
               <SelectContent>
-                {models.map((model) => (
+                {models.map((model: any) => (
                   <SelectItem key={model.id} value={model.id}>
                     {model.name}
                   </SelectItem>
