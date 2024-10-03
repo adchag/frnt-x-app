@@ -10,7 +10,9 @@ export const useAssistant = (assistantId: string) => {
     const fetchAssistant = async () => {
       setIsLoading(true);
       try {
+        console.log('Fetching assistant', assistantId);
         const data = await get_assistant(assistantId);
+        console.log('Assistant data', data);
         setAssistant(data);
       } catch (err) {
         setError('Error fetching assistant');

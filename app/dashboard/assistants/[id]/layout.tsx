@@ -15,21 +15,24 @@ export default function AssistantLayout({
   const assistantId = params.id as string;
   const { assistant, isLoading, error } = useAssistant(assistantId);
 
-  if (isLoading) return <PageLoader />;
-  if (error) return <div>Error: {error}</div>;
-
   return (
-    <div>
-      <div className="flex justify-between items-center p-4 border-b">
+    <PageLoader isLoading={isLoading}>
+      {error ? (
+        <div>Error: {error}</div>
+      ) : (
         <div>
-          <h1 className="text-2xl font-bold">{assistant.name}</h1>
-          <p className="text-sm text-gray-500">{assistant.description}</p>
+          <div className="flex justify-between items-center p-4 border-b">
+            <div>
+              <h1 className="text-2xl font-bold">{assistant?.name}</h1>
+              <p className="text-sm text-gray-500">{assistant?.description}</p>
+            </div>
+            <Link href={`/dashboard/assistants/${assistantId}/edit`} passHref>
+              <Button>Edit Assistant</Button>
+            </Link>
+          </div>
+          <main>{children}</main>
         </div>
-        <Link href={`/dashboard/assistants/${assistantId}/edit`} passHref>
-          <Button>Edit Assistant</Button>
-        </Link>
-      </div>
-      <main>{children}</main>
-    </div>
+      )}
+    </PageLoader>
   );
 }

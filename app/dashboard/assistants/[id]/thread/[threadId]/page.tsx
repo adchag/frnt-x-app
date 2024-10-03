@@ -14,17 +14,20 @@ const ThreadPage = () => {
   
   const { messages, isLoading, error, sendMessage } = useAssistantThread(threadId, assistantId);
 
-  if (isLoading && messages.length === 0) return <PageLoader />;
-  if (error) return <div>Error: {error}</div>;
-
   const handleBack = () => {
     router.push(`/dashboard/assistants/${assistantId}`);
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)]">
-      <ChatUI initialMessages={messages} onSendMessage={sendMessage} onBack={handleBack} />
-    </div>
+    <PageLoader isLoading={isLoading && messages.length === 0}>
+      {error ? (
+        <div>Error: {error}</div>
+      ) : (
+        <div className="h-[calc(100vh-4rem)]">
+          <ChatUI initialMessages={messages} onSendMessage={sendMessage} onBack={handleBack} />
+        </div>
+      )}
+    </PageLoader>
   );
 };
 

@@ -11,7 +11,9 @@ const useVectors = () => {
     const fetchVectors = async () => {
       try {
         setIsLoading(true);
+        console.log('Fetching vectors');
         const data = await list_vectors();
+        console.log('Vectors fetched:', data);
         setVectors(data);
         setError(null);
       } catch (err) {
