@@ -118,3 +118,19 @@ export const update_assistant = async (assistantId: string, data: any) => {
   });
   return assistant;
 };
+
+export const send_message_to_thread = async (threadId: string, assistantId: string, content: string) => {
+  const message = await create_message(threadId, content);
+  const run = await run_assistant(threadId, assistantId);
+  
+  // Wait for the run to complete
+  let runStatus = await check_run_status(threadId, run.id);
+  while (runStatus.status !== 'completed') {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    runStatus = await check_run_status(threadId, run.id);
+  }
+
+  // Fetch the latest messages after the run is completed
+  const messages = await get_messages(threadId);
+  return messages[messages.length - 1]; // Return the last message (assistant's response)
+};

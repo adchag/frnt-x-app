@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 
 interface MessageContent {
   type: string;
@@ -15,11 +17,12 @@ interface MessageContent {
 interface Message {
   role: string;
   content: MessageContent[];
+  isLoading?: boolean;
 }
 
 interface ChatUIProps {
-  messages: Message[];
-  onSendMessage: (content: string) => void;
+  initialMessages: Message[];
+  onSendMessage: (content: string) => Promise<Message>;
   onBack: () => void;
 }
 
@@ -28,18 +31,51 @@ const renderMessageContent = (content: MessageContent[]) => {
     if (item.type === 'text' && item.text) {
       return <p key={index}>{item.text.value}</p>;
     }
-    // Add more conditions here for other content types if needed
     return null;
   });
 };
 
-export const ChatUI: React.FC<ChatUIProps> = ({ messages, onSendMessage, onBack }) => {
+export const ChatUI: React.FC<ChatUIProps> = ({ initialMessages, onSendMessage, onBack }) => {
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (inputMessage.trim()) {
-      onSendMessage(inputMessage);
+      setIsLoading(true);
+      
+      // Add user message immediately
+      const userMessage: Message = {
+        role: 'user',
+        content: [{ type: 'text', text: { value: inputMessage, annotations: [] } }]
+      };
+      setMessages(prevMessages => [...prevMessages, userMessage]);
+
+      // Add a loading message for the assistant
+      const loadingMessage: Message = {
+        role: 'assistant',
+        content: [],
+        isLoading: true
+      };
+      setMessages(prevMessages => [...prevMessages, loadingMessage]);
+
       setInputMessage('');
+
+      try {
+        const assistantResponse = await onSendMessage(inputMessage);
+        
+        // Replace the loading message with the actual response
+        setMessages(prevMessages => 
+          prevMessages.map((msg, index) => 
+            index === prevMessages.length - 1 ? assistantResponse : msg
+          )
+        );
+      } catch (error) {
+        console.error('Error sending message:', error);
+        // Handle error (e.g., show an error message to the user)
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -57,7 +93,14 @@ export const ChatUI: React.FC<ChatUIProps> = ({ messages, onSendMessage, onBack 
                 <AvatarFallback>{message.role === 'user' ? 'U' : 'A'}</AvatarFallback>
               </Avatar>
               <div className={`mx-2 p-3 rounded-lg ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
-                {renderMessageContent(message.content)}
+                {message.isLoading ? (
+                  <>
+                    <Skeleton className="h-4 w-[200px] mb-2" />
+                    <Skeleton className="h-4 w-[150px]" />
+                  </>
+                ) : (
+                  renderMessageContent(message.content)
+                )}
               </div>
             </div>
           </div>
@@ -70,8 +113,18 @@ export const ChatUI: React.FC<ChatUIProps> = ({ messages, onSendMessage, onBack 
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder="Type your message..."
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+            disabled={isLoading}
           />
-          <Button onClick={handleSendMessage}>Send</Button>
+          <Button onClick={handleSendMessage} disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              'Send'
+            )}
+          </Button>
         </div>
       </div>
     </div>
