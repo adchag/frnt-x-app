@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUploader } from '@/components/file-uploader';
 
-export const MerchantForm = ({ form, debouncedUpdateField, id }) => (
+export const MerchantForm = ({ form, debouncedUpdateField, id }: any) => (
   <div className="space-y-4">
     <FormField
       control={form.control}
