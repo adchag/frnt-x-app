@@ -32,7 +32,7 @@ const EditAssistantPage = () => {
       model: '',
       temperature: 0.7,
       useJsonMode: false,
-      selectedVectorId: null,
+      selectedVectorId: null as string | null,
     },
   });
 
@@ -137,8 +137,8 @@ const EditAssistantPage = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="gpt-4">GPT-4</SelectItem>
-                        <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                        <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                        <SelectItem value="gpt-4o-mini">GPT-4o-mini</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -195,7 +195,10 @@ const EditAssistantPage = () => {
                           <VectorSelect
                             vectors={vectors}
                             selectedVectorId={field.value}
-                            onSelectVector={field.onChange}
+                            onSelectVector={(value) => {
+                              field.onChange(value);
+                              form.setValue('selectedVectorId', value);
+                            }}
                             assistantId={assistantId}
                             onVectorUpdate={handleVectorUpdate}
                           />

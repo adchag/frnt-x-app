@@ -23,7 +23,7 @@ const useAssistantThread = (threadId: string, assistantId: string) => {
     const fetchMessages = async () => {
       try {
         const fetchedMessages = await get_messages(threadId);
-        setMessages(fetchedMessages);
+        setMessages(fetchedMessages.reverse()); // Reverse the order of messages
       } catch (err) {
         setError('Failed to fetch messages');
       } finally {
@@ -39,9 +39,11 @@ const useAssistantThread = (threadId: string, assistantId: string) => {
     setError(null);
 
     try {
-      const newMessage = await send_message_to_thread(threadId, assistantId, content);
-      setMessages(prevMessages => [...prevMessages, newMessage]);
-      return newMessage;
+      const response = await send_message_to_thread(threadId, assistantId, content);
+      
+      // Assuming response is already the correct Message type
+      setMessages(prevMessages => [...prevMessages, response]);
+      return response;
     } catch (err) {
       setError('Failed to send message');
       throw err;

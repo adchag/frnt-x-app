@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -39,19 +39,31 @@ export const ChatUI: React.FC<ChatUIProps> = ({ initialMessages, onSendMessage, 
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useLayoutEffect(() => {
+    scrollToBottom();
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const handleSendMessage = async () => {
     if (inputMessage.trim()) {
       setIsLoading(true);
       
-      // Add user message immediately
       const userMessage: Message = {
         role: 'user',
         content: [{ type: 'text', text: { value: inputMessage, annotations: [] } }]
       };
       setMessages(prevMessages => [...prevMessages, userMessage]);
 
-      // Add a loading message for the assistant
       const loadingMessage: Message = {
         role: 'assistant',
         content: [],
@@ -64,15 +76,12 @@ export const ChatUI: React.FC<ChatUIProps> = ({ initialMessages, onSendMessage, 
       try {
         const assistantResponse = await onSendMessage(inputMessage);
         
-        // Replace the loading message with the actual response
         setMessages(prevMessages => 
-          prevMessages.map((msg, index) => 
-            index === prevMessages.length - 1 ? assistantResponse : msg
-          )
+          prevMessages.slice(0, -1).concat(assistantResponse)
         );
       } catch (error) {
         console.error('Error sending message:', error);
-        // Handle error (e.g., show an error message to the user)
+        setMessages(prevMessages => prevMessages.slice(0, -1));
       } finally {
         setIsLoading(false);
       }
@@ -81,30 +90,29 @@ export const ChatUI: React.FC<ChatUIProps> = ({ initialMessages, onSendMessage, 
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b flex justify-between items-center">
-        <Button onClick={onBack}>Back to Assistant</Button>
-        <h2 className="text-xl font-bold">Chat Thread</h2>
-      </div>
-      <ScrollArea className="flex-grow p-4">
-        {messages.map((message, index) => (
-          <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
-            <div className={`flex ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'} items-start`}>
-              <Avatar className="w-8 h-8">
-                <AvatarFallback>{message.role === 'user' ? 'U' : 'A'}</AvatarFallback>
-              </Avatar>
-              <div className={`mx-2 p-3 rounded-lg ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
-                {message.isLoading ? (
-                  <>
-                    <Skeleton className="h-4 w-[200px] mb-2" />
-                    <Skeleton className="h-4 w-[150px]" />
-                  </>
-                ) : (
-                  renderMessageContent(message.content)
-                )}
+      <ScrollArea className="flex-grow">
+        <div className="p-4 space-y-4">
+          {messages.map((message, index) => (
+            <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`flex ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'} items-start max-w-[80%]`}>
+                <Avatar className="w-8 h-8">
+                  <AvatarFallback>{message.role === 'user' ? 'U' : 'A'}</AvatarFallback>
+                </Avatar>
+                <div className={`mx-2 p-3 rounded-lg ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
+                  {message.isLoading ? (
+                    <>
+                      <Skeleton className="h-4 w-[200px] mb-2" />
+                      <Skeleton className="h-4 w-[150px]" />
+                    </>
+                  ) : (
+                    renderMessageContent(message.content)
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
       </ScrollArea>
       <div className="p-4 border-t">
         <div className="flex space-x-2">

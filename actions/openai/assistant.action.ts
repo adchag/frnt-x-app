@@ -135,7 +135,7 @@ export const send_message_to_thread = async (threadId: string, assistantId: stri
 
   // Fetch the latest messages after the run is completed
   const messages = await get_messages(threadId);
-  return messages[messages.length - 1]; // Return the last message (assistant's response)
+  return messages[0]; // Return the first message (assistant's response)
 };
 
 // List vectors

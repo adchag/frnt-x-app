@@ -17,7 +17,7 @@ const ChatPage = () => {
       {error ? (
         <div>Error: {error}</div>
       ) : (
-        <div className="h-[calc(100vh-4rem)]">
+        <div className="h-[calc(100vh-85px)]">
           <ChatUI initialMessages={messages} onSendMessage={sendMessage} onBack={() => {}} />
         </div>
       )}

@@ -80,7 +80,7 @@ export default function DashboardLayout({
         </Tabs>
       </div>
       <div className="flex-1 overflow-auto">
-        <div className="container mx-auto p-4">
+        <div className="container mx-auto p-0">
           {children}
         </div>
       </div>
