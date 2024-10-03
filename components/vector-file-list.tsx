@@ -31,6 +31,8 @@ export const VectorFileList = ({ vectorId }: VectorFileListProps) => {
     }
   };
 
+  console.log('Files', files);
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {

@@ -22,17 +22,28 @@ const EditAssistantPage = () => {
   const router = useRouter();
   const assistantId = params.id as string;
   const { assistant, isLoading, error, updateAssistant } = useAssistant(assistantId);
-  const form = useForm();
   const { vectors, isLoading: isVectorsLoading, error: vectorsError, refetch: refetchVectors } = useVectors();
+
+  const form = useForm({
+    defaultValues: {
+      name: '',
+      description: '',
+      instructions: '',
+      model: '',
+      temperature: 0.7,
+      useJsonMode: false,
+      selectedVectorId: null,
+    },
+  });
 
   useEffect(() => {
     if (assistant) {
       const useJsonMode = assistant.response_format !== 'auto' && assistant.response_format?.type === 'json_object';
       form.reset({
-        name: assistant.name,
-        description: assistant.description,
-        instructions: assistant.instructions,
-        model: assistant.model,
+        name: assistant.name || '',
+        description: assistant.description || '',
+        instructions: assistant.instructions || '',
+        model: assistant.model || '',
         temperature: assistant.temperature || 0.7,
         useJsonMode: useJsonMode,
         selectedVectorId: assistant.tool_resources?.file_search?.vector_store_ids?.[0] || null,
@@ -53,7 +64,7 @@ const EditAssistantPage = () => {
       };
       await updateAssistant(updateData);
       toast.success('Assistant updated successfully');
-      router.push(`/dashboard/assistants/${assistantId}`);
+      router.refresh();
     } catch (error) {
       console.error('Error updating assistant:', error);
       toast.error('Failed to update assistant');
@@ -69,7 +80,7 @@ const EditAssistantPage = () => {
   }
 
   return (
-    <PageLoader isLoading={isLoading || isVectorsLoading}>
+    <PageLoader isLoading={isLoading}>
       {vectorsError ? (
         <div>Error loading vectors: {vectorsError}</div>
       ) : (
@@ -171,29 +182,33 @@ const EditAssistantPage = () => {
                   </FormItem>
                 )}
               />
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold">Vector Store</h2>
-                <FormField
-                  control={form.control}
-                  name="selectedVectorId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <VectorSelect
-                          vectors={vectors}
-                          selectedVectorId={field.value}
-                          onSelectVector={field.onChange}
-                          assistantId={assistantId}
-                          onVectorUpdate={handleVectorUpdate}
-                        />
-                      </FormControl>
-                    </FormItem>
+
+              <PageLoader isLoading={isVectorsLoading} message="Loading vectors...">
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">Vector Store</h2>
+                  <FormField
+                    control={form.control}
+                    name="selectedVectorId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <VectorSelect
+                            vectors={vectors}
+                            selectedVectorId={field.value}
+                            onSelectVector={field.onChange}
+                            assistantId={assistantId}
+                            onVectorUpdate={handleVectorUpdate}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  {form.watch('selectedVectorId') && (
+                    <VectorFileList vectorId={form.watch('selectedVectorId') || ''} />
                   )}
-                />
-                {form.watch('selectedVectorId') && (
-                  <VectorFileList vectorId={form.watch('selectedVectorId')} />
-                )}
-              </div>
+                </div>
+              </PageLoader>
+              
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? 'Updating...' : 'Update Assistant'}
               </Button>
