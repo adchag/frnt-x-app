@@ -13,6 +13,9 @@ import { Slider } from "@/components/ui/slider";
 import { update_assistant, get_assistant } from '@/actions/openai/assistant.action';
 import PageLoader from '@/components/page-loader';
 import { toast } from 'sonner';
+import useVectors from "@/hooks/openai/use-vectors";
+import { VectorSelect } from '@/components/vector-select';
+import { VectorFileList } from '@/components/vector-file-list';
 
 const EditAssistantPage = () => {
   const params = useParams();
@@ -21,6 +24,9 @@ const EditAssistantPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const { register, handleSubmit, setValue, watch } = useForm();
+  const { vectors, isLoading: isVectorsLoading, error: vectorsError, refetch: refetchVectors } = useVectors();
+  const [selectedVectorId, setSelectedVectorId] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchAssistant = async () => {
       try {
@@ -33,6 +39,11 @@ const EditAssistantPage = () => {
         setValue('model', assistant.model);
         setValue('temperature', assistant.temperature || 0.7);
         setValue('useJsonMode', useJsonMode);
+
+        // Set the initial selected vector if the assistant has one
+        if (assistant.tool_resources?.file_search?.vector_store_ids?.length) {
+          setSelectedVectorId(assistant.tool_resources?.file_search?.vector_store_ids?.[0] || null);
+        }
       } catch (error) {
         console.error('Error fetching assistant:', error);
         toast.error('Failed to load assistant details');
@@ -49,6 +60,11 @@ const EditAssistantPage = () => {
       const updateData = {
         ...data,
         response_format: data.useJsonMode ? { type: 'json_object' } : null,
+        tool_resources: selectedVectorId ? {
+          file_search: {
+            vector_store_ids: [selectedVectorId],
+          },
+        } : undefined,
       };
       await update_assistant(assistantId, updateData);
       toast.success('Assistant updated successfully');
@@ -61,7 +77,12 @@ const EditAssistantPage = () => {
     }
   };
 
-  if (isLoading) return <PageLoader />;
+  const handleVectorUpdate = () => {
+    refetchVectors();
+  };
+
+  if (isLoading || isVectorsLoading) return <PageLoader />;
+  if (vectorsError) return <div>Error loading vectors: {vectorsError}</div>;
 
   return (
     <div className="p-6 space-y-6">
@@ -110,6 +131,21 @@ const EditAssistantPage = () => {
           />
           <Label htmlFor="useJsonMode">Use JSON Mode</Label>
         </div>
+        
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Vector Store</h2>
+          <VectorSelect
+            vectors={vectors}
+            selectedVectorId={selectedVectorId}
+            onSelectVector={setSelectedVectorId}
+            assistantId={assistantId}
+            onVectorUpdate={handleVectorUpdate}
+          />
+          {selectedVectorId && (
+            <VectorFileList vectorId={selectedVectorId} />
+          )}
+        </div>
+
         <Button type="submit" disabled={isUpdating}>
           {isUpdating ? 'Updating...' : 'Update Assistant'}
         </Button>

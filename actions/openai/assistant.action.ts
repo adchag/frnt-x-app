@@ -3,6 +3,8 @@
 import OpenAI from "openai";
 import { createClient } from '@/lib/supabase-server';
 import { cookies } from 'next/headers';
+import { Vector } from "@/types/openai/vector.type";
+import { VectorStore, VectorStoresPage } from "openai/resources/beta/vector-stores/vector-stores.mjs";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -133,4 +135,63 @@ export const send_message_to_thread = async (threadId: string, assistantId: stri
   // Fetch the latest messages after the run is completed
   const messages = await get_messages(threadId);
   return messages[messages.length - 1]; // Return the last message (assistant's response)
+};
+
+// List vectors
+export const list_vectors = async (): Promise<any> => {
+  const vectors = await openai.beta.vectorStores.list();
+  return vectors.data;
+};
+
+// Attach vector to assistant
+export const attach_vector = async (assistantId: string, vectorStoreIds: string[]) => {
+  const assistant = await openai.beta.assistants.update(assistantId, {
+    tool_resources: {
+      file_search: {
+        vector_store_ids: vectorStoreIds,
+      },
+    },
+  });
+  return assistant;
+};
+
+// Upload vector
+export const upload_vector = async (name: string) => {
+  const vectorStore = await openai.beta.vectorStores.create({
+    name: name,
+  });
+  return vectorStore;
+};
+
+// Update vector name
+export const update_vector = async (vectorId: string, name: string) => {
+  const updatedVector = await openai.beta.vectorStores.update(vectorId, {
+    name: name,
+  });
+  return updatedVector;
+};
+
+// Upload file to vector store
+export const upload_file_to_vector = async (vectorId: string, file: File) => {
+  const openaiFile = await openai.files.create({
+    file: file,
+    purpose: "assistants",
+  });
+
+  const vectorFile = await openai.beta.vectorStores.files.create(vectorId, {
+    file_id: openaiFile.id,
+  });
+
+  return vectorFile;
+};
+
+// List files in vector store
+export const list_vector_files = async (vectorId: string) => {
+  const files = await openai.beta.vectorStores.files.list(vectorId);
+  return files.data;
+};
+
+// Delete file from vector store
+export const delete_vector_file = async (vectorId: string, fileId: string) => {
+  await openai.beta.vectorStores.files.del(vectorId, fileId);
 };
