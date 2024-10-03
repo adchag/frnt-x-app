@@ -60,12 +60,12 @@ export const VectorFileList = ({ vectorId }: VectorFileListProps) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center space-x-2">
-        <Input type="file" onChange={handleFileUpload} />
-        <Button onClick={() => document.getElementById('file-upload')?.click()}>
+        <Input type="file" onChange={handleFileUpload} className="flex-grow" />
+        <Button onClick={() => document.getElementById('file-upload')?.click()} size="sm">
           Upload File
         </Button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="space-y-4">
         {files.map((file) => (
           <VectorFileCard
             key={file.id}

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase-server';
 import { cookies } from 'next/headers';
 import { Vector } from "@/types/openai/vector.type";
 import { VectorStore, VectorStoresPage } from "openai/resources/beta/vector-stores/vector-stores.mjs";
+import { NextResponse } from 'next/server';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -194,4 +195,24 @@ export const list_vector_files = async (vectorId: string) => {
 // Delete file from vector store
 export const delete_vector_file = async (vectorId: string, fileId: string) => {
   await openai.beta.vectorStores.files.del(vectorId, fileId);
+};
+
+// Download vector file
+export const download_vector_file = async (fileId: string) => {
+  try {
+    const response = await openai.files.content(fileId);
+    const fileContent = await response.text();
+    console.log(fileContent);
+    
+    // Create a Blob with the file content
+    const blob = new Blob([fileContent], { type: 'application/json' });
+    
+    // Create a URL for the Blob
+    const url = URL.createObjectURL(blob);
+    
+    return { url, fileName: `${fileId}.json` };
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    throw new Error('Failed to download file');
+  }
 };

@@ -14,4 +14,12 @@ export interface VectorFile {
   vector_store_id: string;
   file_id: string;
   status: string;
+  usage_bytes: number;
+  chunking_strategy: {
+    type: string;
+    static: {
+      max_chunk_size_tokens: number;
+      chunk_overlap_tokens: number;
+    };
+  };
 }
