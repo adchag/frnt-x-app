@@ -52,10 +52,9 @@ const columns: ColumnDef<Merchant>[] = [
 const MerchantsPage = () => {
   const { merchants, isLoading, error } = useMerchant()
 
-  if (isLoading) return <PageLoader />
-  if (error) return <div>Error: {error.message}</div>
 
   return (
+    <PageLoader isLoading={isLoading}>
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Merchant Mandates</h1>
@@ -64,7 +63,8 @@ const MerchantsPage = () => {
         </Link>
       </div>
       <MyTable columns={columns} data={merchants as any} />
-    </div>
+      </div>
+    </PageLoader>
   )
 }
 

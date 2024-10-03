@@ -20,7 +20,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, For
 const EditAssistantPage = () => {
   const params = useParams();
   const router = useRouter();
-  const assistantId = params.id as string;
+  const assistantId = params?.id as string;
   const { assistant, isLoading, error, updateAssistant } = useAssistant(assistantId);
   const { vectors, isLoading: isVectorsLoading, error: vectorsError, refetch: refetchVectors } = useVectors();
 

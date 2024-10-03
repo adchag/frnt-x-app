@@ -41,8 +41,8 @@ export default function DashboardLayout({
   if (!user) return null;
 
   const getActiveTab = () => {
-    if (pathname.startsWith('/dashboard/merchants')) return 'merchants';
-    if (pathname.startsWith('/dashboard/assistants')) return 'assistants';
+    if (pathname?.startsWith('/dashboard/merchants')) return 'merchants';
+    if (pathname?.startsWith('/dashboard/assistants')) return 'assistants';
     return 'merchants'; // default to merchants if no match
   };
 

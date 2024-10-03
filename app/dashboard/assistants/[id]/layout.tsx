@@ -15,10 +15,10 @@ export default function AssistantLayout({
 }) {
   const params = useParams();
   const pathname = usePathname();
-  const assistantId = params.id as string;
+  const assistantId = params?.id as string;
   const { assistant, isLoading, error } = useAssistant(assistantId);
 
-  const showBackButton = pathname.includes('/edit') || pathname.includes('/chat') || pathname.split('/').length > 4;
+  const showBackButton = pathname?.includes('/edit') || pathname?.includes('/chat') || (pathname?.split('/').length ?? 0) > 4;
 
   return (
     <PageLoader isLoading={isLoading}>
