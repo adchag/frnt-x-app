@@ -117,7 +117,6 @@ const EditMerchantPage = () => {
   useEffect(() => {
     if (selectedAssistant) {
       const assistant = assistants.find((a) => a.id === selectedAssistant);
-      console.debug("assistant", assistant);
       if (assistant) {
         setAssistantData({
           name: assistant.name,
@@ -221,8 +220,17 @@ const EditMerchantPage = () => {
                       value={field.value}
                       onChange={(files) => {
                         const file = Array.isArray(files) ? files[0] : files;
-                        field.onChange(file);
-                        debouncedUpdateField("logo", file);
+                        const fileData = file
+                          ? {
+                              id: file?.id,
+                              name: file?.name,
+                              url: file?.url,
+                              type: file?.type,
+                              size: file?.size,
+                            }
+                          : null;
+                        field.onChange(fileData);
+                        debouncedUpdateField("logo", fileData);
                       }}
                       multiple={false}
                       acceptedFileTypes={["image/*"]}

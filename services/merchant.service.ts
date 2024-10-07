@@ -1,19 +1,11 @@
-'use server';
+"use server";
 
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { Merchant as SupabaseMerchant } from "@/types/supabase/merchants.type";
 type Database = any;
 
-export interface Merchant {
-  id: string;
-  company_name: string;
-  logo: any;
-  description: string | null;
-  assistant_id: string | null;
-  oa_assistant_id: string | null;
-  created_at: string;
-  updated_at: string;
-}
+export interface Merchant extends SupabaseMerchant {}
 
 export interface MerchantFile {
   id: string;
@@ -32,29 +24,19 @@ export interface MerchantFile {
 
 export const getMerchants = async (): Promise<Merchant[]> => {
   const supabase = createServerComponentClient<Database>({ cookies });
-  const { data, error } = await supabase
-    .from('merchants')
-    .select('*')
-    .order('company_name', { ascending: true });
+  const { data, error } = await supabase.from("merchants").select("*").order("company_name", { ascending: true });
 
   if (error) throw error;
   return data as Merchant[];
 };
 
-export const getMerchant = async (id: string): Promise<{ merchant: Merchant | null, files: MerchantFile[] }> => {
+export const getMerchant = async (id: string): Promise<{ merchant: Merchant | null; files: MerchantFile[] }> => {
   const supabase = createServerComponentClient<Database>({ cookies });
-  const { data: merchant, error: merchantError } = await supabase
-    .from('merchants')
-    .select('*')
-    .eq('id', id)
-    .single();
+  const { data: merchant, error: merchantError } = await supabase.from("merchants").select("*").eq("id", id).single();
 
   if (merchantError) throw merchantError;
 
-  const { data: files, error: filesError } = await supabase
-    .from('files')
-    .select('*')
-    .eq('merchant_id', id);
+  const { data: files, error: filesError } = await supabase.from("files").select("*").eq("merchant_id", id);
 
   if (filesError) throw filesError;
 
@@ -62,14 +44,10 @@ export const getMerchant = async (id: string): Promise<{ merchant: Merchant | nu
 };
 
 export const createMerchant = async (
-  merchant: Omit<Merchant, 'id' | 'created_at' | 'updated_at'>
+  merchant: Omit<Merchant, "id" | "created_at" | "updated_at">
 ): Promise<Merchant> => {
   const supabase = createServerComponentClient<Database>({ cookies });
-  const { data, error } = await supabase
-    .from('merchants')
-    .insert(merchant)
-    .select()
-    .single();
+  const { data, error } = await supabase.from("merchants").insert(merchant).select().single();
 
   if (error) throw error;
   return data as Merchant;
@@ -77,38 +55,28 @@ export const createMerchant = async (
 
 export const updateMerchant = async (id: string, data: Partial<Merchant>) => {
   const supabase = createServerComponentClient<Database>({ cookies });
-  const { error } = await supabase
-    .from('merchants')
-    .update(data)
-    .eq('id', id);
+  const { error } = await supabase.from("merchants").update(data).eq("id", id);
 
   if (error) throw error;
 };
 
 export const deleteMerchant = async (id: string): Promise<void> => {
   const supabase = createServerComponentClient<Database>({ cookies });
-  const { error } = await supabase
-    .from('merchants')
-    .delete()
-    .eq('id', id);
+  const { error } = await supabase.from("merchants").delete().eq("id", id);
 
   if (error) throw error;
 };
 
 export const getMerchantFiles = async (merchant_id: string): Promise<MerchantFile[]> => {
   const supabase = createServerComponentClient<Database>({ cookies });
-  const { data, error } = await supabase
-    .from('files')
-    .select('*')
-    .eq('merchant_id', merchant_id);
+  const { data, error } = await supabase.from("files").select("*").eq("merchant_id", merchant_id);
   return data as MerchantFile[];
 };
 
-
 export const updateMerchantFiles = async (merchant_id: string, files: MerchantFile[]): Promise<void> => {
   const existingFiles = await getMerchantFiles(merchant_id);
-  const filesToAdd = files.filter(file => !existingFiles.some(existingFile => existingFile.id === file.id));
-  const filesToDelete = existingFiles.filter(existingFile => !files.some(file => file.id === existingFile.id));
+  const filesToAdd = files.filter((file) => !existingFiles.some((existingFile) => existingFile.id === file.id));
+  const filesToDelete = existingFiles.filter((existingFile) => !files.some((file) => file.id === existingFile.id));
 
   for (const file of filesToDelete) {
     await deleteMerchantFile(file.id);
@@ -117,15 +85,13 @@ export const updateMerchantFiles = async (merchant_id: string, files: MerchantFi
   for (const file of filesToAdd) {
     await addMerchantFile(file);
   }
-}
+};
 
-export const addMerchantFile = async (file: Omit<MerchantFile, 'id' | 'created_at' | 'updated_at'>): Promise<MerchantFile> => {
+export const addMerchantFile = async (
+  file: Omit<MerchantFile, "id" | "created_at" | "updated_at">
+): Promise<MerchantFile> => {
   const supabase = createServerComponentClient<Database>({ cookies });
-  const { data, error } = await supabase
-    .from('files')
-    .insert(file)
-    .select()
-    .single();
+  const { data, error } = await supabase.from("files").insert(file).select().single();
 
   if (error) throw error;
   return data as MerchantFile;
@@ -133,10 +99,7 @@ export const addMerchantFile = async (file: Omit<MerchantFile, 'id' | 'created_a
 
 export const deleteMerchantFile = async (fileId: string): Promise<void> => {
   const supabase = createServerComponentClient<Database>({ cookies });
-  const { error } = await supabase
-    .from('files')
-    .delete()
-    .eq('id', fileId);
+  const { error } = await supabase.from("files").delete().eq("id", fileId);
 
   if (error) throw error;
 };
