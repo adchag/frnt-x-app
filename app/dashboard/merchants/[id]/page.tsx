@@ -1,62 +1,33 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import Image from "next/image";
 import { useMerchant } from "@/hooks/use-merchant";
-import { Button } from "@/components/ui/button";
-import { deleteMerchant } from "@/services/merchant.service";
 import PageLoader from "@/components/page-loader";
 
-const MerchantPage = () => {
-  const { id } = useParams() as any;
-  const { merchant, isLoading, error } = useMerchant(id as string);
+const DetailsPage = () => {
+  const { id } = useParams() as { id: string };
+  const { merchant, isLoading, error } = useMerchant(id);
 
-  const handleDelete = async () => {
-    if (id) {
-      await deleteMerchant(id as string);
-      // Redirect to the merchants list page after deletion
-      // You might want to use a routing library or Next.js router for this
-    }
-  };
+  if (isLoading) return <PageLoader isLoading={isLoading}>Loading...</PageLoader>;
+  if (error) return <div>Error: {error.message}</div>;
+  if (!merchant) return <div>Merchant not found</div>;
 
   return (
-    <PageLoader isLoading={isLoading}>
-      {error ? (
-        <div>Error: {error.message}</div>
-      ) : !merchant ? (
-        <div>Merchant not found</div>
-      ) : (
-        <div className="container mx-auto py-10">
-          <h1 className="text-3xl font-bold mb-6">{merchant.company_name}</h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h2 className="text-xl font-semibold mb-2">Logo</h2>
-              {merchant.logo ? (
-                <Image
-                  src={merchant.logo.url}
-                  alt={`${merchant.company_name} logo`}
-                  width={200}
-                  height={200}
-                  className="rounded-lg"
-                />
-              ) : (
-                <p>No logo available</p>
-              )}
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold mb-2">Description</h2>
-              <p>{merchant.description || "No description available"}</p>
-            </div>
-          </div>
-          <div className="mt-6">
-            <Button onClick={handleDelete} variant="destructive">
-              Delete Mandate
-            </Button>
-          </div>
+    <div>
+      <h2 className="text-2xl font-bold mb-4">Merchant Details</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <h3 className="text-lg font-semibold">Company Name</h3>
+          <p>{merchant.company_name}</p>
         </div>
-      )}
-    </PageLoader>
+        <div>
+          <h3 className="text-lg font-semibold">Description</h3>
+          <p>{merchant.description}</p>
+        </div>
+        {/* Add more merchant details here */}
+      </div>
+    </div>
   );
 };
 
-export default MerchantPage;
+export default DetailsPage;
