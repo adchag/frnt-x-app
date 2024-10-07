@@ -1,89 +1,98 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase-client';
+import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User } from '@supabase/supabase-js';
-import { Brain, Building, Moon, Sun, Users } from 'lucide-react';
-import { useTheme } from "next-themes";
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
+import { Menu } from 'lucide-react';
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [user, setUser] = useState<User | null>(null);
-  const router = useRouter();
+const sidebarItems = [
+  { name: "Dashboard", href: "/dashboard" },
+  { name: "Merchants", href: "/dashboard/merchants" },
+  { name: "Clients", href: "/dashboard/clients" },
+  { name: "Settings", href: "/dashboard/settings" },
+];
+
+const MobileNav = ({ items }: { items: typeof sidebarItems }) => {
+  const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const supabase = createClient();
-  const { setTheme } = useTheme();
-
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUser(user);
-      } else {
-        router.push('/auth/login');
-      }
-    };
-    checkUser();
-  }, [router, supabase.auth]);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
-  };
-
-  if (!user) return null;
-
-  const getActiveTab = () => {
-    if (pathname?.startsWith('/dashboard/merchants')) return 'merchants';
-    if (pathname?.startsWith('/dashboard/assistants')) return 'assistants';
-    return 'merchants'; // default to merchants if no match
-  };
 
   return (
-    <div className="flex h-screen bg-background">
-      <div className="w-64 bg-card shadow-md">
-        <div className="p-4">
-          <h2 className="text-2xl font-bold mb-4">Dashboard</h2>
-          <p className="mb-4 text-sm">Logged in as: {user?.email}</p>
-          <Button onClick={handleSignOut} className="w-full mb-4">Sign Out</Button>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="icon" onClick={() => setTheme("light")}>
-              <Sun className="h-[1.2rem] w-[1.2rem]" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => setTheme("dark")}>
-              <Moon className="h-[1.2rem] w-[1.2rem]" />
-            </Button>
-          </div>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button variant="outline" size="icon" className="md:hidden">
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle Menu</span>
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-[240px] sm:w-[300px]">
+        <nav className="flex flex-col space-y-2">
+          {items.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                pathname === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+              )}
+              onClick={() => setOpen(false)}
+            >
+              {item.name}
+            </Link>
+          ))}
+        </nav>
+      </SheetContent>
+    </Sheet>
+  );
+};
+
+const Sidebar = ({ items }: { items: typeof sidebarItems }) => {
+  const pathname = usePathname();
+
+  return (
+    <nav className="hidden md:flex flex-col space-y-2">
+      {items.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          className={cn(
+            "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+            pathname === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+          )}
+        >
+          {item.name}
+        </Link>
+      ))}
+    </nav>
+  );
+};
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
+
+  return (
+    <div className="flex min-h-screen">
+      <aside className="w-64 border-r bg-background p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <MobileNav items={sidebarItems} />
         </div>
-        <Tabs value={getActiveTab()} className="w-full" orientation="vertical">
-          <TabsList className="flex flex-col items-stretch h-full">
-            <TabsTrigger value="merchants" asChild className="justify-start">
-              <Link href="/dashboard/merchants" className="flex items-center">
-                <Users className="mr-2" />
-                Merchants
-              </Link>
-            </TabsTrigger>
-            <TabsTrigger value="assistants" asChild className="justify-start">
-              <Link href="/dashboard/assistants" className="flex items-center">
-                <Brain className="mr-2" />
-                Assistants
-              </Link>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-      <div className="flex-1 overflow-auto">
-        <div className="container mx-auto p-0">
-          {children}
-        </div>
-      </div>
+        <ScrollArea className="h-[calc(100vh-120px)]">
+          <Sidebar items={sidebarItems} />
+        </ScrollArea>
+      </aside>
+      <main className="flex-1 p-6 overflow-y-auto">{children}</main>
     </div>
   );
 }

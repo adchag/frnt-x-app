@@ -24,6 +24,30 @@ const DetailsPage = () => {
           <h3 className="text-lg font-semibold">Description</h3>
           <p>{merchant.description}</p>
         </div>
+        <div>
+          <h3 className="text-lg font-semibold">Mandate</h3>
+          <p>{merchant.mandate || "N/A"}</p>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold">Size</h3>
+          <p>{merchant.size || "N/A"}</p>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold">Committed Funds</h3>
+          <p>{merchant.committed_funds || "N/A"}</p>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold">Structure</h3>
+          <p>{merchant.structure || "N/A"}</p>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold">Start Date</h3>
+          <p>{merchant.start_date || "N/A"}</p>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold">Main Contact</h3>
+          <p>{merchant.main_contact || "N/A"}</p>
+        </div>
         {/* Add more merchant details here */}
       </div>
     </div>
