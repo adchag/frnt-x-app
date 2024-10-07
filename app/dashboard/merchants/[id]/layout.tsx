@@ -6,6 +6,8 @@ import Link from "next/link";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMerchant } from "@/hooks/use-merchant";
 import PageLoader from "@/components/page-loader";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 const MerchantLayout = ({ children }: { children: React.ReactNode }) => {
   const { id } = useParams() as { id: string };
@@ -26,12 +28,19 @@ const MerchantLayout = ({ children }: { children: React.ReactNode }) => {
   if (!merchant) return <div>Merchant not found</div>;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-4">{merchant.company_name}</h1>
-      <p className="text-gray-600 mb-6">{merchant.description}</p>
-
-      <Tabs value={activeTab} className="mb-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+    <div className="container mx-auto px-4 py-4">
+      <div className="flex">
+        <Button variant="ghost" size="xs" asChild>
+          <Link href="/dashboard/merchants">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Merchants
+          </Link>
+        </Button>
+      </div>
+      <h1 className="text-2xl font-bold">{merchant.company_name}</h1>
+      <p className="text-gray-600 mb-4">{merchant.description}</p>
+      <Tabs value={activeTab} className="mb-4">
+        <TabsList className="inline-flex">
           <TabsTrigger value="details" asChild>
             <Link href={`/dashboard/merchants/${id}`}>Details</Link>
           </TabsTrigger>
@@ -47,7 +56,7 @@ const MerchantLayout = ({ children }: { children: React.ReactNode }) => {
         </TabsList>
       </Tabs>
 
-      <div className="bg-white shadow-md rounded-lg p-6">{children}</div>
+      <div className="bg-white shadow-md rounded-lg p-4">{children}</div>
     </div>
   );
 };

@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { FileUploader } from "@/components/file-uploader";
 import PageLoader from "@/components/page-loader";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { debounce } from "lodash";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -193,14 +192,8 @@ const EditMerchantPage = () => {
       ) : !merchant ? (
         <div>Merchant not found</div>
       ) : (
-        <div className="container mx-auto py-10">
-          <div className="flex items-center mb-6">
-            <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/merchants")}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Merchants
-            </Button>
-          </div>
-          <h1 className="text-3xl font-bold mb-6">Edit Merchant Mandate</h1>
+        <div className="container mx-auto py-6">
+          <h1 className="text-2xl font-bold mb-6">Edit Merchant Mandate</h1>
           <CustomForm {...form} className="space-y-4">
             <FormField
               control={form.control}
