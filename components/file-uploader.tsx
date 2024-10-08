@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { X, Download, Trash, File, Image as ImageIcon, Music, Video, FileText } from "lucide-react";
+import { X, Download, Trash, File, Image as ImageIcon, Music, Video, FileText, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -157,7 +157,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
     [bucketName, folderPath, onChange, multiple, maxFiles]
   );
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     multiple,
     accept: acceptedFileTypes.reduce((acc, type) => ({ ...acc, [type]: [] }), {}),
@@ -259,10 +259,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
   return (
     <div>
-      {(!filesRef.current.length || (multiple && filesRef.current.length < (maxFiles || Infinity))) && (
+      {!filesRef.current.length ? (
         <div
           {...getRootProps()}
-          className={`border-2 border-dashed p-6 rounded-md cursor-pointer ${
+          className={`border border-dashed p-4 rounded-md cursor-pointer text-sm ${
             isDragActive ? "border-blue-500" : "border-gray-300"
           }`}
         >
@@ -270,12 +270,30 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
           {isDragActive ? (
             <p className="text-center">Drop the files here ...</p>
           ) : (
-            <p className="text-center">Drag &apos;n&apos; drop files here, or click to select files</p>
+            <p className="text-center text-gray-500 max-w-[180px] m-auto">
+              Drag &apos;n&apos; drop files here, or click to select files
+            </p>
           )}
         </div>
-      )}
-
+      ) : null}
       <div className="mt-4 space-y-2">{files.map((file) => renderFilePreview(file))}</div>
+      {multiple && filesRef.current.length < (maxFiles || Infinity) && (
+        <div className="flex justify-end mt-2">
+          <Button
+            variant="outline"
+            size="xs"
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              open();
+            }}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add more files
+          </Button>
+        </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!deleteFile} onOpenChange={() => setDeleteFile(null)}>

@@ -259,6 +259,9 @@ const EditMerchantPage = () => {
               render={() => (
                 <FormItem>
                   <FormLabel>Additional Files</FormLabel>
+                  <FormDescription>
+                    Upload additional files related to the merchant (images, PDFs, Word documents)
+                  </FormDescription>
                   <FormControl>
                     <FileUploader
                       bucketName="merchants"
@@ -286,9 +289,6 @@ const EditMerchantPage = () => {
                       ]}
                     />
                   </FormControl>
-                  <FormDescription>
-                    Upload additional files related to the merchant (images, PDFs, Word documents)
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
