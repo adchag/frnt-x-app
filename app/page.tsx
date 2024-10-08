@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { createClient } from '@/lib/supabase-client';
+import { createClient } from '@/lib/supabase/supabase.client';
 
 const Home = () => {
   const router = useRouter();

@@ -1,11 +1,11 @@
-'use server';
+"use server";
 
 import OpenAI from "openai";
-import { createClient } from '@/lib/supabase-server';
-import { cookies } from 'next/headers';
+import { createServerClient } from "@/lib/supabase/supabase.server";
+import { cookies } from "next/headers";
 import { Vector } from "@/types/openai/vector.type";
 import { VectorStore, VectorStoresPage } from "openai/resources/beta/vector-stores/vector-stores.mjs";
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -25,12 +25,12 @@ export const get_assistant = async (assistantId: string) => {
 
 // List threads for a specific assistant
 export const list_assistant_threads = async (assistantId: string) => {
-  const supabase = createClient(cookies());
+  const supabase = createServerClient();
   const { data, error } = await supabase
-    .from('threads')
-    .select('*')
-    .eq('assistant_id', assistantId)
-    .order('created_at', { ascending: false });
+    .from("threads")
+    .select("*")
+    .eq("assistant_id", assistantId)
+    .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
   return data;
@@ -38,18 +38,18 @@ export const list_assistant_threads = async (assistantId: string) => {
 
 // Create a new thread for an assistant
 export const create_thread = async (assistantId: string) => {
-  const supabase = createClient(cookies());
+  const supabase = createServerClient();
   const thread = await openai.beta.threads.create();
-  
+
   const { data, error } = await supabase
-    .from('threads')
+    .from("threads")
     .insert({
       id: thread.id,
       object: thread.object,
       created_at: thread.created_at,
       metadata: thread.metadata,
       tool_resources: thread.tool_resources,
-      assistant_id: assistantId
+      assistant_id: assistantId,
     })
     .select()
     .single();
@@ -58,17 +58,12 @@ export const create_thread = async (assistantId: string) => {
   return data;
 };
 
-
 export const delete_thread = async (threadId: string) => {
-  const supabase = createClient(cookies());
+  const supabase = createServerClient();
   // delete the thread from openai
   await openai.beta.threads.del(threadId);
 
-  const { error } = await supabase
-    .from('threads')
-    .delete()
-    .eq('id', threadId);
-
+  const { error } = await supabase.from("threads").delete().eq("id", threadId);
 
   if (error) throw new Error(error.message);
   return true;
@@ -125,11 +120,11 @@ export const update_assistant = async (assistantId: string, data: any) => {
 export const send_message_to_thread = async (threadId: string, assistantId: string, content: string) => {
   const message = await create_message(threadId, content);
   const run = await run_assistant(threadId, assistantId);
-  
+
   // Wait for the run to complete
   let runStatus = await check_run_status(threadId, run.id);
-  while (runStatus.status !== 'completed') {
-    await new Promise(resolve => setTimeout(resolve, 1000));
+  while (runStatus.status !== "completed") {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     runStatus = await check_run_status(threadId, run.id);
   }
 
@@ -203,16 +198,16 @@ export const download_vector_file = async (fileId: string) => {
     const response = await openai.files.content(fileId);
     const fileContent = await response.text();
     console.log(fileContent);
-    
+
     // Create a Blob with the file content
-    const blob = new Blob([fileContent], { type: 'application/json' });
-    
+    const blob = new Blob([fileContent], { type: "application/json" });
+
     // Create a URL for the Blob
     const url = URL.createObjectURL(blob);
-    
+
     return { url, fileName: `${fileId}.json` };
   } catch (error) {
-    console.error('Error downloading file:', error);
-    throw new Error('Failed to download file');
+    console.error("Error downloading file:", error);
+    throw new Error("Failed to download file");
   }
 };

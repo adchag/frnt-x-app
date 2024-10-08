@@ -4,7 +4,7 @@
 
 import React, { useCallback, useState, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
-import { createClient } from "../lib/supabase-client";
+import { createClient } from "@/lib/supabase/supabase.client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
